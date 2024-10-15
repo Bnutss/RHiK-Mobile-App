@@ -1,0 +1,44 @@
+name: rhick
+description: "A new Flutter project."
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.3
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  http: ^1.2.2
+  local_auth: ^2.1.6
+  shared_preferences: ^2.2.3
+  url_launcher: ^6.3.0
+  flutter_bloc: ^8.1.6
+  intl: ^0.19.0
+  cupertino_icons: ^1.0.6
+  badges: ^3.1.2
+  dropdown_search: ^5.0.2
+  image_picker: ^1.1.2
+  file_picker: ^8.1.2
+  permission_handler: ^11.3.1
+
+dev_dependencies:
+  flutter_launcher_icons: ^0.13.1
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter_launcher_icons:
+  android: true    # Явно указываем, что генерация иконок для Android включена
+  ios: true        # Явно указываем, что генерация иконок для iOS включена
+  image_path: "assets/icon/logo.png"
+  remove_alpha_ios: true  # Убирает альфа-канал для iOS
+
+flutter:
+  assets:
+    - assets/icon/logo.png
+  uses-material-design: true
