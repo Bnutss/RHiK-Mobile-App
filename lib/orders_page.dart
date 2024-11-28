@@ -32,7 +32,7 @@ class _OrdersPageState extends State<OrdersPage> {
     }
 
     final response = await http.get(
-      Uri.parse('http://127.0.0.1:8000/sales/api/orders/'),
+      Uri.parse('https://rhik.pythonanywhere.com/sales/api/orders/'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=utf-8',
         'Authorization': 'Bearer $token',
@@ -67,7 +67,7 @@ class _OrdersPageState extends State<OrdersPage> {
     if (token == null) return;
 
     final response = await http.delete(
-      Uri.parse('http://127.0.0.1:8000/sales/api/orders/$orderId/'),
+      Uri.parse('https://rhik.pythonanywhere.com/sales/api/orders/$orderId/'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=utf-8',
         'Authorization': 'Bearer $token',
@@ -130,7 +130,7 @@ class _OrdersPageState extends State<OrdersPage> {
     if (token == null) return;
 
     final response = await http.patch(
-      Uri.parse('http://127.0.0.1:8000/sales/api/orders/$orderId/confirm/'),
+      Uri.parse('https://rhik.pythonanywhere.com/sales/api/orders/$orderId/confirm/'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=utf-8',
         'Authorization': 'Bearer $token',
@@ -150,7 +150,7 @@ class _OrdersPageState extends State<OrdersPage> {
     if (token == null) return;
 
     final response = await http.patch(
-      Uri.parse('http://127.0.0.1:8000/sales/api/orders/$orderId/reject/'),
+      Uri.parse('https://rhik.pythonanywhere.com/sales/api/orders/$orderId/reject/'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=utf-8',
         'Authorization': 'Bearer $token',
@@ -173,7 +173,7 @@ class _OrdersPageState extends State<OrdersPage> {
     }
 
     final url =
-        'http://127.0.0.1:8000/sales/api/orders/$orderId/export_to_telegram/?file_type=$format';
+        'https://rhik.pythonanywhere.com/sales/api/orders/$orderId/export_to_telegram/?file_type=$format';
 
     try {
       final response = await http.post(
@@ -328,7 +328,7 @@ class _OrdersPageState extends State<OrdersPage> {
                                       leading: const Icon(Icons.edit, color: Colors.green),
                                       title: const Text('Редактировать'),
                                       onTap: () {
-                                        Navigator.of(context).pop(); // Закрывает модальное окно, если оно открыто
+                                        Navigator.of(context).pop();
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(

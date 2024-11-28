@@ -34,7 +34,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     }
 
     final response = await http.get(
-      Uri.parse('http://127.0.0.1:8000/sales/api/orders/$orderId/'),
+      Uri.parse('https://rhik.pythonanywhere.com/sales/api/orders/$orderId/'),
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
         'Authorization': 'Bearer $token',
@@ -59,7 +59,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
 
     final request = http.MultipartRequest(
       'POST',
-      Uri.parse('http://127.0.0.1:8000/sales/api/orders/${widget.orderId}/products/'),
+      Uri.parse('https://rhik.pythonanywhere.com/sales/api/orders/${widget.orderId}/products/'),
     )
       ..headers['Authorization'] = 'Bearer $token'
       ..fields['name'] = name
@@ -185,7 +185,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
 
     final request = http.MultipartRequest(
       'PUT',
-      Uri.parse('http://127.0.0.1:8000/sales/api/orders/${widget.orderId}/products/$productId/'),
+      Uri.parse('https://rhik.pythonanywhere.com/sales/api/orders/${widget.orderId}/products/$productId/'),
     )
       ..headers['Authorization'] = 'Bearer $token'
       ..fields['name'] = name
@@ -217,7 +217,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     }
 
     final response = await http.delete(
-      Uri.parse('http://127.0.0.1:8000/sales/api/orders/${widget.orderId}/products/$productId/'),
+      Uri.parse('https://rhik.pythonanywhere.com/sales/api/orders/${widget.orderId}/products/$productId/'),
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
         'Authorization': 'Bearer $token',

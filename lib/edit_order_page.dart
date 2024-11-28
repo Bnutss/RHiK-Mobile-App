@@ -28,7 +28,7 @@ class _EditOrderPageState extends State<EditOrderPage> {
   Future<void> _loadOrder() async {
     try {
       final response = await http.get(
-        Uri.parse('http://127.0.0.1:8000/sales/api/orders/${widget.orderId}/'),
+        Uri.parse('https://rhik.pythonanywhere.com/sales/api/orders/${widget.orderId}/'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -53,7 +53,7 @@ class _EditOrderPageState extends State<EditOrderPage> {
     if (_formKey.currentState!.validate()) {
       try {
         final response = await http.put(
-          Uri.parse('http://127.0.0.1:8000/sales/api/orders/${widget.orderId}/'),
+          Uri.parse('https://rhik.pythonanywhere.com/sales/api/orders/${widget.orderId}/'),
           headers: {'Content-Type': 'application/json'},
           body: json.encode({
             'client': _clientController.text,
@@ -64,7 +64,7 @@ class _EditOrderPageState extends State<EditOrderPage> {
 
         if (response.statusCode == 200) {
           _showSuccess('Заказ успешно обновлен!');
-          Navigator.pop(context, true); // Возвращаемся с результатом успеха
+          Navigator.pop(context, true);
         } else {
           _showError('Ошибка обновления заказа: ${response.statusCode}');
         }

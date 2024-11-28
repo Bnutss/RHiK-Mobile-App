@@ -83,7 +83,7 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _fetchUserData(String token) async {
     final userResponse = await http.get(
-      Uri.parse('http://127.0.0.1:8000/api/user/'),
+      Uri.parse('https://rhik.pythonanywhere.com/api/user/'),
       headers: <String, String>{
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -116,7 +116,7 @@ class _LoginPageState extends State<LoginPage> {
     if (refreshToken != null) {
       try {
         final response = await http.post(
-          Uri.parse('http://127.0.0.1:8000/api/token/refresh/'),
+          Uri.parse('https://rhik.pythonanywhere.com/api/token/refresh/'),
           headers: <String, String>{
             'Content-Type': 'application/json',
           },
@@ -146,7 +146,7 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://127.0.0.1:8000/api/login/'),
+        Uri.parse('https://rhik.pythonanywhere.com/api/login/'),
         headers: <String, String>{
           'Content-Type': 'application/json',
         },

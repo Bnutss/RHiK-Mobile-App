@@ -57,7 +57,7 @@ class _ResultsDayPageState extends State<ResultsDayPage> {
         if (endDate != null) 'end_date': endDate,
       };
       final uri = Uri.http(
-        '127.0.0.1:8000',
+        'rhik.pythonanywhere.com',
         '/sales/api/confirmed-orders/',
         queryParameters,
       );

@@ -17,7 +17,7 @@ class _AddOrderPageState extends State<AddOrderPage> {
   final _formKey = GlobalKey<FormState>();
   final _clientController = TextEditingController();
   final _vatController = TextEditingController();
-  final _additionalExpensesController = TextEditingController();  // Контроллер для прочих расходов
+  final _additionalExpensesController = TextEditingController();
 
   Future<void> _submitOrder() async {
     if (_formKey.currentState!.validate()) {
@@ -35,7 +35,7 @@ class _AddOrderPageState extends State<AddOrderPage> {
       }
 
       final response = await http.post(
-        Uri.parse('http://127.0.0.1:8000/sales/api/orders/'),
+        Uri.parse('https://rhik.pythonanywhere.com/sales/api/orders/'),
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
           'Authorization': 'Bearer $token',
