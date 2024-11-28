@@ -1,79 +1,89 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
-import 'order_detail_page.dart';
+import 'dart:convert';
 
-class AddOrderPage extends StatefulWidget {
-  final int? orderId;
+class EditOrderPage extends StatefulWidget {
+  final int orderId;
 
-  const AddOrderPage({Key? key, this.orderId}) : super(key: key);
+  const EditOrderPage({Key? key, required this.orderId}) : super(key: key);
 
   @override
-  _AddOrderPageState createState() => _AddOrderPageState();
+  _EditOrderPageState createState() => _EditOrderPageState();
 }
 
-class _AddOrderPageState extends State<AddOrderPage> {
+class _EditOrderPageState extends State<EditOrderPage> {
   final _formKey = GlobalKey<FormState>();
   final _clientController = TextEditingController();
   final _vatController = TextEditingController();
-  final _additionalExpensesController = TextEditingController();  // Контроллер для прочих расходов
+  final _additionalExpensesController = TextEditingController();
+
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOrder();
+  }
+
+  Future<void> _loadOrder() async {
+    try {
+      final response = await http.get(
+        Uri.parse('http://127.0.0.1:8000/sales/api/orders/${widget.orderId}/'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> orderData = json.decode(response.body);
+
+        setState(() {
+          _clientController.text = orderData['client'] ?? '';
+          _vatController.text = (orderData['vat'] ?? 0).toString();
+          _additionalExpensesController.text = (orderData['additional_expenses'] ?? 0).toString();
+          _isLoading = false;
+        });
+      } else {
+        _showError('Ошибка загрузки данных заказа: ${response.statusCode}');
+      }
+    } catch (e) {
+      _showError('Не удалось загрузить заказ: $e');
+    }
+  }
 
   Future<void> _submitOrder() async {
     if (_formKey.currentState!.validate()) {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('access_token');
-
-      if (token == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Токен не найден'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-
-      final response = await http.post(
-        Uri.parse('http://127.0.0.1:8000/sales/api/orders/'),
-        headers: {
-          'Content-Type': 'application/json; charset=utf-8',
-          'Authorization': 'Bearer $token',
-        },
-        body: json.encode({
-          'client': _clientController.text,
-          'vat': _vatController.text.isEmpty ? null : double.tryParse(_vatController.text),
-          'additional_expenses': _additionalExpensesController.text.isEmpty ? null : double.tryParse(_additionalExpensesController.text),
-          'is_confirmed': false,
-        }),
-      );
-
-      if (response.statusCode == 201) {
-        final jsonResponse = json.decode(response.body);
-        final int newOrderId = jsonResponse['id'];
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => OrderDetailPage(orderId: newOrderId),
-          ),
+      try {
+        final response = await http.put(
+          Uri.parse('http://127.0.0.1:8000/sales/api/orders/${widget.orderId}/'),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode({
+            'client': _clientController.text,
+            'vat': double.tryParse(_vatController.text) ?? 0.0,
+            'additional_expenses': double.tryParse(_additionalExpensesController.text) ?? 0.0,
+          }),
         );
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Заказ успешно создан'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Ошибка создания заказа: ${response.statusCode}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (response.statusCode == 200) {
+          _showSuccess('Заказ успешно обновлен!');
+          Navigator.pop(context, true); // Возвращаемся с результатом успеха
+        } else {
+          _showError('Ошибка обновления заказа: ${response.statusCode}');
+        }
+      } catch (e) {
+        _showError('Не удалось обновить заказ: $e');
       }
     }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
+  void _showSuccess(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.green),
+    );
   }
 
   @override
@@ -81,7 +91,7 @@ class _AddOrderPageState extends State<AddOrderPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Добавить заказ',
+          'Редактировать заказ',
           style: TextStyle(color: Colors.white),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
@@ -103,7 +113,9 @@ class _AddOrderPageState extends State<AddOrderPage> {
             end: Alignment.bottomRight,
           ),
         ),
-        child: Padding(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : Padding(
           padding: const EdgeInsets.all(16.0),
           child: Form(
             key: _formKey,
@@ -166,9 +178,9 @@ class _AddOrderPageState extends State<AddOrderPage> {
                 const SizedBox(height: 30),
                 ElevatedButton.icon(
                   onPressed: _submitOrder,
-                  icon: const Icon(Icons.add_circle_outline, color: Colors.black),
+                  icon: const Icon(Icons.save, color: Colors.black),
                   label: const Text(
-                    'Создать заказ',
+                    'Сохранить изменения',
                     style: TextStyle(fontSize: 18, color: Colors.black),
                   ),
                   style: ElevatedButton.styleFrom(

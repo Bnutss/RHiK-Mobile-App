@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'order_detail_page.dart';
 import 'add_order_page.dart';
+import 'edit_order_page.dart';
 
 class OrdersPage extends StatefulWidget {
   const OrdersPage({Key? key}) : super(key: key);
@@ -31,7 +32,7 @@ class _OrdersPageState extends State<OrdersPage> {
     }
 
     final response = await http.get(
-      Uri.parse('https://rhik.pythonanywhere.com/sales/api/orders/'),
+      Uri.parse('http://127.0.0.1:8000/sales/api/orders/'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=utf-8',
         'Authorization': 'Bearer $token',
@@ -66,7 +67,7 @@ class _OrdersPageState extends State<OrdersPage> {
     if (token == null) return;
 
     final response = await http.delete(
-      Uri.parse('https://rhik.pythonanywhere.com/sales/api/orders/$orderId/'),
+      Uri.parse('http://127.0.0.1:8000/sales/api/orders/$orderId/'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=utf-8',
         'Authorization': 'Bearer $token',
@@ -129,7 +130,7 @@ class _OrdersPageState extends State<OrdersPage> {
     if (token == null) return;
 
     final response = await http.patch(
-      Uri.parse('https://rhik.pythonanywhere.com/sales/api/orders/$orderId/confirm/'),
+      Uri.parse('http://127.0.0.1:8000/sales/api/orders/$orderId/confirm/'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=utf-8',
         'Authorization': 'Bearer $token',
@@ -149,7 +150,7 @@ class _OrdersPageState extends State<OrdersPage> {
     if (token == null) return;
 
     final response = await http.patch(
-      Uri.parse('https://rhik.pythonanywhere.com/sales/api/orders/$orderId/reject/'),
+      Uri.parse('http://127.0.0.1:8000/sales/api/orders/$orderId/reject/'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=utf-8',
         'Authorization': 'Bearer $token',
@@ -172,7 +173,7 @@ class _OrdersPageState extends State<OrdersPage> {
     }
 
     final url =
-        'https://rhik.pythonanywhere.com/sales/api/orders/$orderId/export_to_telegram/?file_type=$format';
+        'http://127.0.0.1:8000/sales/api/orders/$orderId/export_to_telegram/?file_type=$format';
 
     try {
       final response = await http.post(
@@ -301,18 +302,60 @@ class _OrdersPageState extends State<OrdersPage> {
                     return Dismissible(
                       key: ValueKey(order.id),
                       background: Container(
+                        color: Colors.green,
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: const Icon(Icons.next_plan_outlined, color: Colors.white),
+                      ),
+                      secondaryBackground: Container(
                         color: Colors.red,
                         alignment: Alignment.centerRight,
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: const Icon(Icons.delete, color: Colors.white),
                       ),
-                      direction: DismissDirection.endToStart,
+                      direction: DismissDirection.horizontal,
                       onDismissed: (direction) {
-                        _deleteOrder(order.id);
+                        if (direction == DismissDirection.startToEnd) {
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text('Выберите действие'),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    ListTile(
+                                      leading: const Icon(Icons.edit, color: Colors.green),
+                                      title: const Text('Редактировать'),
+                                      onTap: () {
+                                        Navigator.of(context).pop(); // Закрывает модальное окно, если оно открыто
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => EditOrderPage(orderId: order.id),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    ListTile(
+                                      leading: const Icon(Icons.send, color: Colors.blue),
+                                      title: const Text('Отправить по телеграмму'),
+                                      onTap: () {
+                                        Navigator.of(context).pop();
+                                        _showExportDialog(order.id);
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          );
+                        } else if (direction == DismissDirection.endToStart) {
+                          _deleteOrder(order.id);
+                        }
                       },
                       child: Card(
-                        margin: const EdgeInsets.symmetric(
-                            vertical: 5, horizontal: 8),
+                        margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 8),
                         elevation: 5,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(15)),
@@ -321,69 +364,65 @@ class _OrdersPageState extends State<OrdersPage> {
                             radius: 15,
                             backgroundColor: Colors.blue.shade100,
                             child: Icon(
-                              order.isConfirmed
-                                  ? Icons.done
-                                  : order.isRejected
-                                  ? Icons.close
-                                  : Icons.pending,
-                              color: order.isConfirmed
-                                  ? Colors.green
-                                  : order.isRejected
-                                  ? Colors.red
-                                  : Colors.orange,
+                              order.isConfirmed ? Icons.done :
+                              order.isRejected ? Icons.close : Icons.pending,
+                              color: order.isConfirmed ? Colors.green :
+                              order.isRejected ? Colors.red : Colors.orange,
                               size: 20,
                             ),
                           ),
                           title: Text(order.client,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16)),
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
                                 children: [
-                                  const Icon(Icons.attach_money,
-                                      color: Colors.black54, size: 14),
+                                  const Icon(Icons.attach_money, color: Colors.black54, size: 14),
                                   const SizedBox(width: 2),
-                                  Text('НДС: ${order.vat}%',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 11)),
+                                  Text('НДС: ${order.vat}%', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                                ],
+                              ),
+                              Row(
+                                children: [
+                                  const Icon(Icons.monetization_on, color: Colors.black54, size: 14),
+                                  const SizedBox(width: 2),
+                                  Text('Доп. расходы: ${order.additionalExpenses}%', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
                                 ],
                               ),
                               Row(
                                 children: [
                                   const Icon(Icons.shield, color: Colors.black54, size: 14),
                                   const SizedBox(width: 2),
-                                  Text('Гарантия: $warrantyDaysLeft',
-                                      style: const TextStyle(fontSize: 11)),
+                                  Text('Гарантия: $warrantyDaysLeft ', style: const TextStyle(fontSize: 11)),
                                 ],
                               ),
                               Row(
                                 children: [
-                                  const Icon(Icons.info_outline,
-                                      color: Colors.black54, size: 14),
+                                  const Icon(Icons.info_outline, color: Colors.black54, size: 14),
                                   const SizedBox(width: 2),
-                                  Text('Статус: $status',
-                                      style: const TextStyle(fontSize: 11)),
+                                  Text('Статус: $status', style: const TextStyle(fontSize: 11)),
                                 ],
                               ),
                               Row(
                                 children: [
-                                  const Icon(Icons.money_off,
-                                      color: Colors.black54, size: 14),
+                                  const Icon(Icons.money_off, color: Colors.black54, size: 14),
                                   const SizedBox(width: 2),
-                                  Text('Сумма без НДС: ${order.totalPriceWithoutVat}',
-                                      style: const TextStyle(fontSize: 11)),
+                                  Text('Сумма расходов: ${order.additionalExpensesAmount?.toStringAsFixed(2)}', style: const TextStyle( fontSize: 11)),
                                 ],
                               ),
                               Row(
                                 children: [
-                                  const Icon(Icons.attach_money,
-                                      color: Colors.black54, size: 14),
+                                  const Icon(Icons.money_off, color: Colors.black54, size: 14),
                                   const SizedBox(width: 2),
-                                  Text('Сумма с НДС: ${order.totalPriceWithVat}',
-                                      style: const TextStyle(fontSize: 11)),
+                                  Text('Сумма без НДС: ${order.totalPriceWithoutVat}', style: const TextStyle(fontSize: 11)),
+                                ],
+                              ),
+                              Row(
+                                children: [
+                                  const Icon(Icons.attach_money, color: Colors.black54, size: 14),
+                                  const SizedBox(width: 2),
+                                  Text('Общая сумма: ${order.totalPriceWithVat}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
                                 ],
                               ),
                             ],
@@ -393,12 +432,6 @@ class _OrdersPageState extends State<OrdersPage> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                if (order.isConfirmed || order.isRejected)
-                                  IconButton(
-                                    icon: const Icon(Icons.send, size: 20),
-                                    color: Colors.blue,
-                                    onPressed: () => _showExportDialog(order.id),
-                                  ),
                                 if (!order.isConfirmed && !order.isRejected)
                                   IconButton(
                                     icon: const Icon(Icons.check_circle_outline, size: 20),
@@ -418,8 +451,7 @@ class _OrdersPageState extends State<OrdersPage> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    OrderDetailPage(orderId: order.id),
+                                builder: (context) => OrderDetailPage(orderId: order.id),
                               ),
                             );
                           },
@@ -453,6 +485,7 @@ class Order {
   final int id;
   final String client;
   final double vat;
+  final double? additionalExpenses;
   final bool isConfirmed;
   final bool isRejected;
   final int? warrantyDaysLeft;
@@ -463,6 +496,7 @@ class Order {
     required this.id,
     required this.client,
     required this.vat,
+    this.additionalExpenses,
     required this.isConfirmed,
     required this.isRejected,
     this.warrantyDaysLeft,
@@ -474,18 +508,20 @@ class Order {
     return Order(
       id: json['id'],
       client: json['client'],
-      vat: json['vat'] != null
-          ? double.tryParse(json['vat'].toString()) ?? 0.0
-          : 0.0,
+      vat: json['vat'] != null ? double.tryParse(json['vat'].toString()) ?? 0.0 : 0.0,
+      additionalExpenses: json['additional_expenses'] != null ? double.tryParse(json['additional_expenses'].toString()) ?? 0.0 : 0.0,  // Обновлено
       isConfirmed: json['is_confirmed'],
       isRejected: json['is_rejected'],
       warrantyDaysLeft: json['warranty_days_left'],
-      totalPriceWithoutVat: json['total_price_without_vat'] != null
-          ? double.tryParse(json['total_price_without_vat'].toString())
-          : null,
-      totalPriceWithVat: json['total_price_with_vat'] != null
-          ? double.tryParse(json['total_price_with_vat'].toString())
-          : null,
+      totalPriceWithoutVat: json['total_price_without_vat'] != null ? double.tryParse(json['total_price_without_vat'].toString()) ?? 0.0 : 0.0,  // Обновлено
+      totalPriceWithVat: json['total_price_with_vat'] != null ? double.tryParse(json['total_price_with_vat'].toString()) ?? 0.0 : 0.0,  // Обновлено
     );
+  }
+
+  double? get additionalExpensesAmount {
+    if (additionalExpenses != null && totalPriceWithoutVat != null) {
+      return totalPriceWithoutVat! * (additionalExpenses! / 100);
+    }
+    return null;
   }
 }

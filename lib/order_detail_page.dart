@@ -34,7 +34,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     }
 
     final response = await http.get(
-      Uri.parse('https://rhik.pythonanywhere.com/sales/api/orders/$orderId/'),
+      Uri.parse('http://127.0.0.1:8000/sales/api/orders/$orderId/'),
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
         'Authorization': 'Bearer $token',
@@ -59,7 +59,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
 
     final request = http.MultipartRequest(
       'POST',
-      Uri.parse('https://rhik.pythonanywhere.com/sales/api/orders/${widget.orderId}/products/'),
+      Uri.parse('http://127.0.0.1:8000/sales/api/orders/${widget.orderId}/products/'),
     )
       ..headers['Authorization'] = 'Bearer $token'
       ..fields['name'] = name
@@ -185,7 +185,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
 
     final request = http.MultipartRequest(
       'PUT',
-      Uri.parse('https://rhik.pythonanywhere.com/sales/api/orders/${widget.orderId}/products/$productId/'),
+      Uri.parse('http://127.0.0.1:8000/sales/api/orders/${widget.orderId}/products/$productId/'),
     )
       ..headers['Authorization'] = 'Bearer $token'
       ..fields['name'] = name
@@ -217,7 +217,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     }
 
     final response = await http.delete(
-      Uri.parse('https://rhik.pythonanywhere.com/sales/api/orders/${widget.orderId}/products/$productId/'),
+      Uri.parse('http://127.0.0.1:8000/sales/api/orders/${widget.orderId}/products/$productId/'),
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
         'Authorization': 'Bearer $token',
@@ -357,6 +357,34 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                               const SizedBox(width: 10),
                               Text(
                                 'Сумма с НДС: ${orderDetails.totalPriceWithVat.toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              const Icon(Icons.account_balance_wallet, color: Colors.orange, size: 30),
+                              const SizedBox(width: 10),
+                              Text(
+                                'Прочие расходы: ${orderDetails.additionalExpensesAmount.toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              const Icon(Icons.summarize, color: Colors.red, size: 30),
+                              const SizedBox(width: 10),
+                              Text(
+                                'Общая сумма: ${orderDetails.totalGeneralAmount.toStringAsFixed(2)}',
                                 style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -529,29 +557,39 @@ class OrderProduct {
 class OrderDetails {
   final String client;
   final double vat;
+  final double additionalExpenses;
   final List<OrderProduct> products;
   final double totalPriceWithoutVat;
   final double totalPriceWithVat;
+  final double additionalExpensesAmount;
+  final double totalGeneralAmount;
 
   OrderDetails({
     required this.client,
     required this.vat,
+    required this.additionalExpenses,
     required this.products,
     required this.totalPriceWithoutVat,
     required this.totalPriceWithVat,
+    required this.additionalExpensesAmount,
+    required this.totalGeneralAmount,
   });
 
   factory OrderDetails.fromJson(Map<String, dynamic> json) {
-    var productsList = (json['products'] as List)
-        .map((productJson) => OrderProduct.fromJson(productJson))
-        .toList();
+    var productsList = (json['products'] as List?)
+        ?.map((productJson) => OrderProduct.fromJson(productJson))
+        .toList() ??
+        [];
 
     return OrderDetails(
       client: json['client'],
-      vat: double.tryParse(json['vat'].toString()) ?? 0.0,
+      vat: double.tryParse(json['vat']?.toString() ?? '0.0') ?? 0.0,
+      additionalExpenses: double.tryParse(json['additional_expenses']?.toString() ?? '0.0') ?? 0.0,
       products: productsList,
-      totalPriceWithoutVat: double.tryParse(json['total_price_without_vat'].toString()) ?? 0.0,
-      totalPriceWithVat: double.tryParse(json['total_price_with_vat'].toString()) ?? 0.0,
+      totalPriceWithoutVat: double.tryParse(json['total_price_without_vat']?.toString() ?? '0.0') ?? 0.0,
+      totalPriceWithVat: double.tryParse(json['total_price_with_vat']?.toString() ?? '0.0') ?? 0.0,
+      additionalExpensesAmount: double.tryParse(json['additional_expenses_amount']?.toString() ?? '0.0') ?? 0.0,
+      totalGeneralAmount: double.tryParse(json['total_general_amount']?.toString() ?? '0.0') ?? 0.0,
     );
   }
 }

@@ -17,7 +17,6 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
   final LocalAuthentication auth = LocalAuthentication();
   bool _canCheckBiometrics = false;
-  String _welcomeMessage = 'Добро пожаловать в RHiK';
 
   @override
   void initState() {
@@ -84,7 +83,7 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _fetchUserData(String token) async {
     final userResponse = await http.get(
-      Uri.parse('https://rhik.pythonanywhere.com/api/user/'),
+      Uri.parse('http://127.0.0.1:8000/api/user/'),
       headers: <String, String>{
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -117,7 +116,7 @@ class _LoginPageState extends State<LoginPage> {
     if (refreshToken != null) {
       try {
         final response = await http.post(
-          Uri.parse('https://rhik.pythonanywhere.com/api/token/refresh/'),
+          Uri.parse('http://127.0.0.1:8000/api/token/refresh/'),
           headers: <String, String>{
             'Content-Type': 'application/json',
           },
@@ -147,7 +146,7 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('https://rhik.pythonanywhere.com/api/login/'),
+        Uri.parse('http://127.0.0.1:8000/api/login/'),
         headers: <String, String>{
           'Content-Type': 'application/json',
         },
@@ -202,17 +201,8 @@ class _LoginPageState extends State<LoginPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   SizedBox(height: 3),
-                  Image.asset('assets/icon/logo.png', width: 250),
+                  Image.asset('assets/icon/logo.png', width: 300),
                   SizedBox(height: 10),
-                  Text(
-                    _welcomeMessage,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
                   SizedBox(height: 10),
                   TextField(
                     controller: _usernameController,

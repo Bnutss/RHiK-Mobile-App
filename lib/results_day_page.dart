@@ -57,7 +57,7 @@ class _ResultsDayPageState extends State<ResultsDayPage> {
         if (endDate != null) 'end_date': endDate,
       };
       final uri = Uri.http(
-        'rhik.pythonanywhere.com',
+        '127.0.0.1:8000',
         '/sales/api/confirmed-orders/',
         queryParameters,
       );
@@ -174,7 +174,7 @@ class _ResultsDayPageState extends State<ResultsDayPage> {
                                   children: [
                                     Icon(Icons.attach_money, color: Colors.orange),
                                     SizedBox(width: 8),
-                                    Text('Стоимость с НДС: ${order['total_price_with_vat']}'),
+                                    Text('Стоимость: ${order['total_price_with_vat']}'),
                                   ],
                                 ),
                                 Row(
