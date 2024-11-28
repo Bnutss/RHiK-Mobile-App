@@ -75,7 +75,7 @@ class _SettingsPageState extends State<SettingsPage> {
             bottom: 16,
             right: 16,
             child: Text(
-              'Версия 1.0.2',
+              'Версия 1.0.3',
               style: TextStyle(color: Colors.white, fontSize: 12),
             ),
           ),
