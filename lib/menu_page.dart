@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'info_page.dart';
 import 'results_day_page.dart';
 import 'orders_page.dart';
-
+import 'passwords_page.dart';
 
 class MenuPage extends StatelessWidget {
   final Map<String, dynamic> userData;
@@ -32,6 +32,13 @@ class MenuPage extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => ResultsDayPage()),
+    );
+  }
+
+  void _openPasswordsPage(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => PasswordsPage()),
     );
   }
 
@@ -83,14 +90,15 @@ class MenuPage extends StatelessWidget {
                   icon: const Icon(Icons.add, color: Colors.white),
                   label: const Text(
                     'Заказы',
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blueGrey,
-                    minimumSize: const Size(double.infinity, 50),
+                    minimumSize: const Size(200, 50),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30.0),
                     ),
+                    elevation: 5,
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -99,20 +107,26 @@ class MenuPage extends StatelessWidget {
                   icon: const Icon(Icons.restore_outlined, color: Colors.white),
                   label: const Text(
                     'Итоги дня',
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blueGrey,
-                    minimumSize: const Size(double.infinity, 50),
+                    minimumSize: const Size(200, 50),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30.0),
                     ),
+                    elevation: 5,
                   ),
                 ),
               ],
             ),
           ),
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _openPasswordsPage(context),
+        backgroundColor: Colors.blueGrey,
+        child: const Icon(Icons.vpn_key, color: Colors.white),
       ),
     );
   }
