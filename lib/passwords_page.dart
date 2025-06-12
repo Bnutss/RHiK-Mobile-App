@@ -23,7 +23,12 @@ class _PasswordsPageState extends State<PasswordsPage>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
-  // Состояние видимости паролей
+  // Цвета Hikvision
+  final Color hikRed = Color(0xFFE31E24);
+  final Color visionGray = Color(0xFF707070);
+  final Color darkGray = Color(0xFF333333);
+  final Color lightGray = Color(0xFFF5F5F5);
+
   Map<int, bool> _passwordVisibility = {};
 
   @override
@@ -84,7 +89,6 @@ class _PasswordsPageState extends State<PasswordsPage>
           passwords = data;
           filteredPasswords = data;
 
-          // Инициализируем состояние видимости для всех паролей
           for (var password in data) {
             _passwordVisibility[password['id']] = false;
           }
@@ -193,14 +197,14 @@ class _PasswordsPageState extends State<PasswordsPage>
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              backgroundColor: Color(0xFF1A237E),
+              backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
               title: Text(
                 password == null ? 'Добавить запись' : 'Редактировать запись',
                 style: GoogleFonts.montserrat(
-                  color: Colors.white,
+                  color: hikRed,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -210,18 +214,19 @@ class _PasswordsPageState extends State<PasswordsPage>
                   children: [
                     TextField(
                       controller: organizationController,
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: darkGray),
                       decoration: InputDecoration(
                         labelText: 'Название организации',
-                        labelStyle: TextStyle(color: Colors.white70),
-                        prefixIcon: Icon(Icons.business, color: Colors.white70),
+                        labelStyle: TextStyle(color: visionGray),
+                        prefixIcon: Icon(Icons.business, color: visionGray),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.white30),
+                          borderSide:
+                              BorderSide(color: visionGray.withOpacity(0.3)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Color(0xFFFF4081)),
+                          borderSide: BorderSide(color: hikRed),
                         ),
                       ),
                     ),
@@ -229,17 +234,17 @@ class _PasswordsPageState extends State<PasswordsPage>
                     TextField(
                       controller: nvrController,
                       obscureText: _obscureNvr,
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: darkGray),
                       decoration: InputDecoration(
                         labelText: 'Пароль NVR',
-                        labelStyle: TextStyle(color: Colors.white70),
-                        prefixIcon: Icon(Icons.lock, color: Colors.white70),
+                        labelStyle: TextStyle(color: visionGray),
+                        prefixIcon: Icon(Icons.lock, color: visionGray),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscureNvr
                                 ? Icons.visibility_off
                                 : Icons.visibility,
-                            color: Colors.white70,
+                            color: visionGray,
                           ),
                           onPressed: () {
                             setState(() {
@@ -249,11 +254,12 @@ class _PasswordsPageState extends State<PasswordsPage>
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.white30),
+                          borderSide:
+                              BorderSide(color: visionGray.withOpacity(0.3)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Color(0xFFFF4081)),
+                          borderSide: BorderSide(color: hikRed),
                         ),
                       ),
                     ),
@@ -261,17 +267,17 @@ class _PasswordsPageState extends State<PasswordsPage>
                     TextField(
                       controller: cameraController,
                       obscureText: _obscureCamera,
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: darkGray),
                       decoration: InputDecoration(
                         labelText: 'Пароль камеры',
-                        labelStyle: TextStyle(color: Colors.white70),
-                        prefixIcon: Icon(Icons.videocam, color: Colors.white70),
+                        labelStyle: TextStyle(color: visionGray),
+                        prefixIcon: Icon(Icons.videocam, color: visionGray),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscureCamera
                                 ? Icons.visibility_off
                                 : Icons.visibility,
-                            color: Colors.white70,
+                            color: visionGray,
                           ),
                           onPressed: () {
                             setState(() {
@@ -281,11 +287,12 @@ class _PasswordsPageState extends State<PasswordsPage>
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.white30),
+                          borderSide:
+                              BorderSide(color: visionGray.withOpacity(0.3)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Color(0xFFFF4081)),
+                          borderSide: BorderSide(color: hikRed),
                         ),
                       ),
                     ),
@@ -298,7 +305,7 @@ class _PasswordsPageState extends State<PasswordsPage>
                   child: Text(
                     'Отмена',
                     style: GoogleFonts.montserrat(
-                      color: Colors.white70,
+                      color: visionGray,
                     ),
                   ),
                 ),
@@ -313,7 +320,7 @@ class _PasswordsPageState extends State<PasswordsPage>
                     Navigator.of(context).pop();
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFFFF4081),
+                    backgroundColor: hikRed,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -334,66 +341,12 @@ class _PasswordsPageState extends State<PasswordsPage>
     );
   }
 
-  Future<void> deletePassword(int id) async {
+  // Метод для непосредственного выполнения удаления (без дополнительного диалога)
+  Future<void> _performDeletePassword(int id) async {
     final token = await _getToken();
     if (token == null) {
       _showSnackBar('Токен не найден. Пожалуйста, войдите заново.',
           isError: true);
-      return;
-    }
-    bool confirmDelete = await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: Color(0xFF1A237E),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Text(
-            'Подтверждение удаления',
-            style: GoogleFonts.montserrat(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: Text(
-            'Вы уверены, что хотите удалить эту запись?',
-            style: GoogleFonts.montserrat(
-              color: Colors.white.withOpacity(0.7),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(
-                'Отмена',
-                style: GoogleFonts.montserrat(
-                  color: Colors.white70,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red.shade700,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: Text(
-                'Удалить',
-                style: GoogleFonts.montserrat(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmDelete != true) {
       return;
     }
 
@@ -420,6 +373,65 @@ class _PasswordsPageState extends State<PasswordsPage>
     }
   }
 
+  // Метод для показа диалога и удаления через кнопку в интерфейсе
+  Future<void> deletePassword(int id) async {
+    bool confirmDelete = await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(
+            'Подтверждение удаления',
+            style: GoogleFonts.montserrat(
+              color: hikRed,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Text(
+            'Вы уверены, что хотите удалить эту запись?',
+            style: GoogleFonts.montserrat(
+              color: darkGray,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(
+                'Отмена',
+                style: GoogleFonts.montserrat(
+                  color: visionGray,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: hikRed,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: Text(
+                'Удалить',
+                style: GoogleFonts.montserrat(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmDelete == true) {
+      await _performDeletePassword(id);
+    }
+  }
+
   void _showSnackBar(String message, {required bool isError}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -427,7 +439,7 @@ class _PasswordsPageState extends State<PasswordsPage>
           message,
           style: GoogleFonts.montserrat(),
         ),
-        backgroundColor: isError ? Colors.red.shade700 : Color(0xFF303F9F),
+        backgroundColor: isError ? hikRed : visionGray,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
@@ -458,10 +470,9 @@ class _PasswordsPageState extends State<PasswordsPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.transparent,
+        backgroundColor: hikRed,
         title: isSearching
             ? TextField(
                 controller: searchController,
@@ -515,41 +526,27 @@ class _PasswordsPageState extends State<PasswordsPage>
         ],
       ),
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF1A237E), // Темно-синий
-              Color(0xFF3949AB), // Индиго
-              Color(0xFF303F9F), // Синий
-            ],
-          ),
-        ),
+        color: Colors.grey[100],
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: RefreshIndicator(
             onRefresh: fetchPasswords,
-            color: Color(0xFFFF4081),
+            color: hikRed,
             backgroundColor: Colors.white,
-            child: SafeArea(
-              child: Column(
-                children: [
-                  // Главный контент
-                  Expanded(
-                    child: isLoading
-                        ? Center(
-                            child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                  Color(0xFFFF4081)),
-                            ),
-                          )
-                        : filteredPasswords.isEmpty
-                            ? _buildEmptyState()
-                            : _buildPasswordsList(),
-                  ),
-                ],
-              ),
+            child: Column(
+              children: [
+                Expanded(
+                  child: isLoading
+                      ? Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(hikRed),
+                          ),
+                        )
+                      : filteredPasswords.isEmpty
+                          ? _buildEmptyState()
+                          : _buildPasswordsList(),
+                ),
+              ],
             ),
           ),
         ),
@@ -558,8 +555,11 @@ class _PasswordsPageState extends State<PasswordsPage>
         onPressed: () {
           _showAddOrEditPasswordDialog();
         },
-        backgroundColor: Color(0xFFFF4081),
-        child: Icon(Icons.add),
+        backgroundColor: hikRed,
+        child: Icon(
+          Icons.add,
+          color: Colors.white,
+        ),
       ),
     );
   }
@@ -571,8 +571,8 @@ class _PasswordsPageState extends State<PasswordsPage>
         children: [
           Icon(
             Icons.lock_open_outlined,
-            size: 80,
-            color: Colors.white.withOpacity(0.3),
+            size: 70,
+            color: visionGray.withOpacity(0.3),
           ),
           SizedBox(height: 16),
           Text(
@@ -580,8 +580,8 @@ class _PasswordsPageState extends State<PasswordsPage>
                 ? 'Нет паролей, соответствующих поиску'
                 : 'Нет сохраненных паролей',
             style: GoogleFonts.montserrat(
-              color: Colors.white.withOpacity(0.7),
-              fontSize: 16,
+              color: visionGray,
+              fontSize: 14,
             ),
             textAlign: TextAlign.center,
           ),
@@ -607,11 +607,11 @@ class _PasswordsPageState extends State<PasswordsPage>
                   : 'Добавить пароль',
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFFFF4081),
+              backgroundColor: hikRed,
               foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
+                borderRadius: BorderRadius.circular(50),
               ),
             ),
           ),
@@ -647,7 +647,7 @@ class _PasswordsPageState extends State<PasswordsPage>
             secondaryBackground: Container(
               margin: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.red.shade600,
+                color: hikRed,
                 borderRadius: BorderRadius.circular(16),
               ),
               alignment: Alignment.centerRight,
@@ -658,22 +658,81 @@ class _PasswordsPageState extends State<PasswordsPage>
               if (direction == DismissDirection.startToEnd) {
                 _showAddOrEditPasswordDialog(password: password);
                 return false;
+              } else if (direction == DismissDirection.endToStart) {
+                // Показываем диалог подтверждения
+                bool? result = await showDialog<bool>(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      backgroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      title: Text(
+                        'Подтверждение удаления',
+                        style: GoogleFonts.montserrat(
+                          color: hikRed,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      content: Text(
+                        'Вы уверены, что хотите удалить эту запись?',
+                        style: GoogleFonts.montserrat(
+                          color: darkGray,
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: Text(
+                            'Отмена',
+                            style: GoogleFonts.montserrat(
+                              color: visionGray,
+                            ),
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: hikRed,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: Text(
+                            'Удалить',
+                            style: GoogleFonts.montserrat(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                );
+                return result ?? false;
               }
-              return null;
+              return false;
             },
             onDismissed: (direction) {
               if (direction == DismissDirection.endToStart) {
-                deletePassword(id);
+                // Непосредственное удаление без повторного диалога
+                _performDeletePassword(id);
               }
             },
             child: Container(
               margin: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.1),
-                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 8,
+                    offset: Offset(0, 3),
+                  ),
+                ],
               ),
               child: ExpansionTile(
                 tilePadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -682,26 +741,26 @@ class _PasswordsPageState extends State<PasswordsPage>
                 leading: Container(
                   padding: EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Color(0xFFFF4081).withOpacity(0.2),
+                    color: hikRed.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.business_outlined,
-                    color: Color(0xFFFF4081),
+                    color: hikRed,
                   ),
                 ),
                 title: Text(
                   password['organization_name'] ?? 'Без названия',
                   style: GoogleFonts.montserrat(
-                    color: Colors.white,
+                    color: darkGray,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 subtitle: Text(
                   'Нажмите, чтобы показать пароли',
                   style: GoogleFonts.montserrat(
-                    color: Colors.white.withOpacity(0.5),
-                    fontSize: 12,
+                    color: visionGray,
+                    fontSize: 10,
                   ),
                 ),
                 trailing: Row(
@@ -710,7 +769,7 @@ class _PasswordsPageState extends State<PasswordsPage>
                     IconButton(
                       icon: Icon(
                         isVisible ? Icons.visibility : Icons.visibility_off,
-                        color: Colors.white.withOpacity(0.7),
+                        color: visionGray,
                         size: 20,
                       ),
                       onPressed: () => _togglePasswordVisibility(id),
@@ -718,7 +777,7 @@ class _PasswordsPageState extends State<PasswordsPage>
                     IconButton(
                       icon: Icon(
                         Icons.edit_outlined,
-                        color: Colors.white.withOpacity(0.7),
+                        color: visionGray,
                         size: 20,
                       ),
                       onPressed: () =>
@@ -732,7 +791,7 @@ class _PasswordsPageState extends State<PasswordsPage>
                     title: 'Пароль NVR:',
                     password: password['nvr_password'] ?? '',
                     isVisible: isVisible,
-                    color: Colors.green,
+                    color: hikRed,
                     onCopy: () => _copyToClipboard(
                         password['nvr_password'] ?? '', 'Пароль NVR'),
                   ),
@@ -742,7 +801,7 @@ class _PasswordsPageState extends State<PasswordsPage>
                     title: 'Пароль камеры:',
                     password: password['camera_password'] ?? '',
                     isVisible: isVisible,
-                    color: Colors.blue,
+                    color: visionGray,
                     onCopy: () => _copyToClipboard(
                         password['camera_password'] ?? '', 'Пароль камеры'),
                   ),
@@ -752,12 +811,14 @@ class _PasswordsPageState extends State<PasswordsPage>
                     children: [
                       TextButton.icon(
                         onPressed: () => deletePassword(id),
-                        icon: Icon(Icons.delete_outline,
-                            color: Colors.red.shade300),
+                        icon: Icon(
+                          Icons.delete_outline,
+                          color: hikRed,
+                        ),
                         label: Text(
                           'Удалить',
                           style: GoogleFonts.montserrat(
-                            color: Colors.red.shade300,
+                            color: hikRed,
                           ),
                         ),
                       ),
@@ -791,7 +852,7 @@ class _PasswordsPageState extends State<PasswordsPage>
         Text(
           title,
           style: GoogleFonts.montserrat(
-            color: Colors.white.withOpacity(0.7),
+            color: darkGray,
           ),
         ),
         SizedBox(width: 8),
@@ -799,7 +860,7 @@ class _PasswordsPageState extends State<PasswordsPage>
           child: Text(
             isVisible ? password : '••••••••',
             style: GoogleFonts.montserrat(
-              color: Colors.white,
+              color: darkGray,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -807,7 +868,7 @@ class _PasswordsPageState extends State<PasswordsPage>
         IconButton(
           icon: Icon(
             Icons.copy,
-            color: Colors.white.withOpacity(0.7),
+            color: visionGray,
             size: 20,
           ),
           onPressed: onCopy,

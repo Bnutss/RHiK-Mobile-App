@@ -22,6 +22,11 @@ class _MenuPageState extends State<MenuPage>
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
 
+  final Color hikRed = Color(0xFFE31E24);
+  final Color visionGray = Color(0xFF707070);
+  final Color darkGray = Color(0xFF333333);
+  final Color lightGray = Color(0xFFF5F5F5);
+
   @override
   void initState() {
     super.initState();
@@ -49,21 +54,21 @@ class _MenuPageState extends State<MenuPage>
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: Color(0xFF1A237E),
+          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
           title: Text(
             'Выход',
             style: GoogleFonts.montserrat(
-              color: Colors.white,
+              color: hikRed,
               fontWeight: FontWeight.bold,
             ),
           ),
           content: Text(
             'Вы уверены, что хотите выйти?',
             style: GoogleFonts.montserrat(
-              color: Colors.white,
+              color: darkGray,
             ),
           ),
           actions: [
@@ -74,7 +79,7 @@ class _MenuPageState extends State<MenuPage>
               child: Text(
                 'Отмена',
                 style: GoogleFonts.montserrat(
-                  color: Colors.white70,
+                  color: visionGray,
                 ),
               ),
             ),
@@ -84,7 +89,7 @@ class _MenuPageState extends State<MenuPage>
                 Navigator.pushReplacementNamed(context, '/login');
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFFF4081),
+                backgroundColor: hikRed,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -164,20 +169,35 @@ class _MenuPageState extends State<MenuPage>
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-
     return Scaffold(
-      extendBodyBehindAppBar: true,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.transparent,
-        title: Text(
-          'Главное меню',
-          style: GoogleFonts.montserrat(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-          ),
+        backgroundColor: hikRed,
+        title: Row(
+          children: [
+            RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: 'HIK',
+                    style: GoogleFonts.montserrat(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                    ),
+                  ),
+                  TextSpan(
+                    text: 'VISION',
+                    style: GoogleFonts.montserrat(
+                      color: Colors.white.withOpacity(0.9),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         actions: <Widget>[
           IconButton(
@@ -189,119 +209,136 @@ class _MenuPageState extends State<MenuPage>
             onPressed: () => _logout(context),
           ),
         ],
-        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF1A237E), // Темно-синий
-              Color(0xFF3949AB), // Индиго
-              Color(0xFF303F9F), // Синий
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
+        color: Colors.grey[100],
+        child: Column(
+          children: [
+            // Приветственный блок
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              decoration: BoxDecoration(
+                color: hikRed,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: hikRed.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  // Приветствие пользователя
-                  Padding(
-                    padding: const EdgeInsets.only(
-                        left: 16.0, top: 16.0, bottom: 30.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Добро пожаловать,',
-                          style: GoogleFonts.montserrat(
-                            color: Colors.white70,
-                            fontSize: 16,
-                          ),
-                        ),
-                        SizedBox(height: 5),
-                        AnimatedTextKit(
-                          animatedTexts: [
-                            TypewriterAnimatedText(
-                              widget.userData['username'] ?? 'Пользователь',
-                              textStyle: GoogleFonts.montserrat(
-                                color: Colors.white,
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              speed: Duration(milliseconds: 100),
-                            ),
-                          ],
-                          totalRepeatCount: 1,
-                        ),
-                      ],
+                children: [
+                  Text(
+                    'Добро пожаловать,',
+                    style: GoogleFonts.montserrat(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 16,
                     ),
                   ),
-
-                  // Главные функции
-                  Expanded(
-                    child: GridView.count(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.85,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      padding: EdgeInsets.all(10),
-                      children: [
-                        _buildMenuCard(
-                          context,
-                          title: 'Заказы',
-                          icon: Icons.shopping_bag_outlined,
-                          color: Color(0xFFFF4081),
-                          onTap: () => _openPartyStatusPage(context),
+                  SizedBox(height: 5),
+                  AnimatedTextKit(
+                    animatedTexts: [
+                      TypewriterAnimatedText(
+                        widget.userData['username'] ?? 'Пользователь',
+                        textStyle: GoogleFonts.montserrat(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
                         ),
-                        _buildMenuCard(
-                          context,
-                          title: 'Итоги дня',
-                          icon: Icons.bar_chart_rounded,
-                          color: Color(0xFF00BCD4),
-                          onTap: () => _openMonitoringPage(context),
-                        ),
-                        _buildMenuCard(
-                          context,
-                          title: 'Пароли',
-                          icon: Icons.vpn_key_outlined,
-                          color: Color(0xFF4CAF50),
-                          onTap: () => _openPasswordsPage(context),
-                        ),
-                        _buildMenuCard(
-                          context,
-                          title: 'Настройки',
-                          icon: Icons.settings_outlined,
-                          color: Color(0xFFFF9800),
-                          onTap: () => _openSettings(context),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Информация о версии
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 20.0),
-                      child: Text(
-                        'Версия 1.0.0',
-                        style: GoogleFonts.montserrat(
-                          color: Colors.white38,
-                          fontSize: 12,
-                        ),
+                        speed: Duration(milliseconds: 100),
                       ),
-                    ),
+                    ],
+                    totalRepeatCount: 1,
                   ),
                 ],
               ),
             ),
-          ),
+
+            // Основное содержимое
+            Expanded(
+              child: ScaleTransition(
+                scale: _scaleAnimation,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.only(
+                            left: 8.0, top: 16.0, bottom: 16.0),
+                        child: Text(
+                          'Меню',
+                          style: GoogleFonts.montserrat(
+                            color: visionGray,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: GridView.count(
+                          crossAxisCount: 2,
+                          childAspectRatio: 0.85,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                          padding: EdgeInsets.all(8),
+                          children: [
+                            _buildMenuCard(
+                              context,
+                              title: 'Заказы',
+                              icon: Icons.shopping_bag_outlined,
+                              color: hikRed,
+                              onTap: () => _openPartyStatusPage(context),
+                            ),
+                            _buildMenuCard(
+                              context,
+                              title: 'Итоги дня',
+                              icon: Icons.bar_chart_rounded,
+                              color: visionGray,
+                              onTap: () => _openMonitoringPage(context),
+                            ),
+                            _buildMenuCard(
+                              context,
+                              title: 'Пароли',
+                              icon: Icons.vpn_key_outlined,
+                              color: hikRed,
+                              onTap: () => _openPasswordsPage(context),
+                            ),
+                            _buildMenuCard(
+                              context,
+                              title: 'Настройки',
+                              icon: Icons.settings_outlined,
+                              color: visionGray,
+                              onTap: () => _openSettings(context),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 20.0),
+                          child: Text(
+                            'XVAN RUSLAN PRODUCTION',
+                            style: GoogleFonts.montserrat(
+                              color: visionGray.withOpacity(0.5),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -318,14 +355,11 @@ class _MenuPageState extends State<MenuPage>
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.1),
-          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withOpacity(0.05),
               blurRadius: 10,
               offset: Offset(0, 5),
             ),
@@ -337,7 +371,7 @@ class _MenuPageState extends State<MenuPage>
             Container(
               padding: EdgeInsets.all(15),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
+                color: color.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -350,7 +384,7 @@ class _MenuPageState extends State<MenuPage>
             Text(
               title,
               style: GoogleFonts.montserrat(
-                color: Colors.white,
+                color: darkGray,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),

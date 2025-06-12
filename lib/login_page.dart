@@ -21,8 +21,13 @@ class _LoginPageState extends State<LoginPage>
   bool _canCheckBiometrics = false;
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _rememberMe = false; // New state for "Remember Me"
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  final Color hikRed = Color(0xFFE31E24);
+  final Color visionGray = Color(0xFF707070);
+  final Color darkGray = Color(0xFF333333);
+  final Color lightGray = Color(0xFFF5F5F5);
 
   @override
   void initState() {
@@ -40,6 +45,7 @@ class _LoginPageState extends State<LoginPage>
     _animationController.forward();
     _checkBiometrics();
     _checkBiometricPreference();
+    _loadSavedCredentials(); // Load saved credentials
   }
 
   @override
@@ -48,6 +54,34 @@ class _LoginPageState extends State<LoginPage>
     _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? savedUsername = prefs.getString('saved_username');
+    String? savedPassword = prefs.getString('saved_password');
+    bool? rememberMe = prefs.getBool('remember_me');
+
+    if (rememberMe == true && savedUsername != null && savedPassword != null) {
+      setState(() {
+        _usernameController.text = savedUsername;
+        _passwordController.text = savedPassword;
+        _rememberMe = true;
+      });
+    }
+  }
+
+  Future<void> _saveCredentials() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (_rememberMe) {
+      await prefs.setString('saved_username', _usernameController.text.trim());
+      await prefs.setString('saved_password', _passwordController.text.trim());
+      await prefs.setBool('remember_me', true);
+    } else {
+      await prefs.remove('saved_username');
+      await prefs.remove('saved_password');
+      await prefs.setBool('remember_me', false);
+    }
   }
 
   Future<void> _checkBiometrics() async {
@@ -207,6 +241,7 @@ class _LoginPageState extends State<LoginPage>
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setString('access_token', accessToken);
         await prefs.setString('refresh_token', refreshToken);
+        await _saveCredentials(); // Save credentials if "Remember Me" is checked
 
         await _fetchUserData(accessToken);
       } else {
@@ -228,7 +263,7 @@ class _LoginPageState extends State<LoginPage>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.red.shade800,
+        backgroundColor: hikRed,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
@@ -244,22 +279,19 @@ class _LoginPageState extends State<LoginPage>
     return Scaffold(
       body: Stack(
         children: [
-          // Фоновое изображение или градиент
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
                 colors: [
-                  Color(0xFF1A237E), // Темно-синий
-                  Color(0xFF3949AB), // Индиго
-                  Color(0xFF303F9F), // Синий
+                  Colors.white,
+                  Colors.grey[100]!,
+                  Colors.grey[200]!,
                 ],
               ),
             ),
           ),
-
-          // Декоративные элементы
           Positioned(
             top: -100,
             right: -100,
@@ -268,11 +300,10 @@ class _LoginPageState extends State<LoginPage>
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.1),
+                color: hikRed.withOpacity(0.05),
               ),
             ),
           ),
-
           Positioned(
             bottom: -80,
             left: -80,
@@ -281,12 +312,28 @@ class _LoginPageState extends State<LoginPage>
               height: 200,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.1),
+                color: visionGray.withOpacity(0.05),
               ),
             ),
           ),
-
-          // Главный контент
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: 150,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    hikRed.withOpacity(0.9),
+                    hikRed.withOpacity(0.0),
+                  ],
+                ),
+              ),
+            ),
+          ),
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -298,14 +345,13 @@ class _LoginPageState extends State<LoginPage>
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Логотип
                         Hero(
                           tag: 'logo',
                           child: Container(
                             decoration: BoxDecoration(
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
+                                  color: Colors.black.withOpacity(0.1),
                                   blurRadius: 20,
                                   offset: Offset(0, 10),
                                 ),
@@ -318,85 +364,97 @@ class _LoginPageState extends State<LoginPage>
                             ),
                           ),
                         ),
-
                         SizedBox(height: 40),
-
-                        // Приветственный текст
-                        Text(
-                          'Добро пожаловать',
-                          style: GoogleFonts.montserrat(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                        RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'HIK',
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  color: hikRed,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'VISION',
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  color: visionGray,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-
                         SizedBox(height: 10),
-
                         Text(
                           'Войдите в свой аккаунт',
                           style: GoogleFonts.montserrat(
                             fontSize: 16,
-                            color: Colors.white.withOpacity(0.8),
+                            color: darkGray,
                           ),
                         ),
-
                         SizedBox(height: 40),
-
-                        // Поля ввода
                         Container(
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.05),
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.1),
-                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: Offset(0, 5),
+                              ),
+                            ],
                           ),
                           child: TextField(
                             controller: _usernameController,
-                            style: TextStyle(color: Colors.white),
+                            style: TextStyle(color: darkGray),
                             decoration: InputDecoration(
                               contentPadding: EdgeInsets.symmetric(
                                   horizontal: 20, vertical: 20),
                               border: InputBorder.none,
                               hintText: 'Логин',
-                              hintStyle: TextStyle(
-                                  color: Colors.white.withOpacity(0.5)),
-                              prefixIcon: Icon(Icons.person_outline,
-                                  color: Colors.white.withOpacity(0.7)),
+                              hintStyle:
+                                  TextStyle(color: visionGray.withOpacity(0.5)),
+                              prefixIcon:
+                                  Icon(Icons.person_outline, color: visionGray),
                             ),
                           ),
                         ),
-
                         SizedBox(height: 20),
-
                         Container(
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.05),
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.1),
-                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: Offset(0, 5),
+                              ),
+                            ],
                           ),
                           child: TextField(
                             controller: _passwordController,
                             obscureText: _obscurePassword,
-                            style: TextStyle(color: Colors.white),
+                            style: TextStyle(color: darkGray),
                             decoration: InputDecoration(
                               contentPadding: EdgeInsets.symmetric(
                                   horizontal: 20, vertical: 20),
                               border: InputBorder.none,
                               hintText: 'Пароль',
-                              hintStyle: TextStyle(
-                                  color: Colors.white.withOpacity(0.5)),
-                              prefixIcon: Icon(Icons.lock_outline,
-                                  color: Colors.white.withOpacity(0.7)),
+                              hintStyle:
+                                  TextStyle(color: visionGray.withOpacity(0.5)),
+                              prefixIcon:
+                                  Icon(Icons.lock_outline, color: visionGray),
                               suffixIcon: IconButton(
                                 icon: Icon(
                                   _obscurePassword
                                       ? Icons.visibility_off
                                       : Icons.visibility,
-                                  color: Colors.white.withOpacity(0.7),
+                                  color: visionGray,
                                 ),
                                 onPressed: () {
                                   setState(() {
@@ -407,10 +465,26 @@ class _LoginPageState extends State<LoginPage>
                             ),
                           ),
                         ),
-
-                        SizedBox(height: 40),
-
-                        // Кнопка входа
+                        SizedBox(height: 10),
+                        CheckboxListTile(
+                          value: _rememberMe,
+                          onChanged: (bool? value) {
+                            setState(() {
+                              _rememberMe = value ?? false;
+                            });
+                          },
+                          title: Text(
+                            'Запомнить меня',
+                            style: GoogleFonts.montserrat(
+                              color: darkGray,
+                              fontSize: 14,
+                            ),
+                          ),
+                          controlAffinity: ListTileControlAffinity.leading,
+                          contentPadding: EdgeInsets.zero,
+                          activeColor: hikRed,
+                        ),
+                        SizedBox(height: 20),
                         Container(
                           width: double.infinity,
                           height: 60,
@@ -418,13 +492,13 @@ class _LoginPageState extends State<LoginPage>
                             borderRadius: BorderRadius.circular(16),
                             gradient: LinearGradient(
                               colors: [
-                                Color(0xFFFF4081), // Розовый
-                                Color(0xFFF50057), // Малиновый
+                                hikRed,
+                                hikRed.withOpacity(0.8),
                               ],
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Color(0xFFFF4081).withOpacity(0.5),
+                                color: hikRed.withOpacity(0.3),
                                 blurRadius: 15,
                                 offset: Offset(0, 8),
                               ),
@@ -451,30 +525,43 @@ class _LoginPageState extends State<LoginPage>
                                   ),
                           ),
                         ),
-
                         SizedBox(height: 30),
-
-                        // Биометрическая аутентификация
                         if (_canCheckBiometrics)
                           GestureDetector(
                             onTap: () => _authenticate(),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.fingerprint,
-                                  color: Colors.white.withOpacity(0.8),
-                                  size: 30,
-                                ),
-                                SizedBox(width: 10),
-                                Text(
-                                  'Войти с помощью биометрии',
-                                  style: GoogleFonts.montserrat(
-                                    color: Colors.white.withOpacity(0.8),
-                                    fontSize: 14,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 12, horizontal: 20),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                color: Colors.white,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 10,
+                                    offset: Offset(0, 5),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.fingerprint,
+                                    color: visionGray,
+                                    size: 30,
+                                  ),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    'Войти с помощью биометрии',
+                                    style: GoogleFonts.montserrat(
+                                      color: visionGray,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                       ],

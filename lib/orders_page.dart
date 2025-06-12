@@ -24,6 +24,12 @@ class _OrdersPageState extends State<OrdersPage>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
+  // Цвета Hikvision
+  final Color hikRed = Color(0xFFE31E24);
+  final Color visionGray = Color(0xFF707070);
+  final Color darkGray = Color(0xFF333333);
+  final Color lightGray = Color(0xFFF5F5F5);
+
   @override
   void initState() {
     super.initState();
@@ -135,14 +141,14 @@ class _OrdersPageState extends State<OrdersPage>
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: Color(0xFF1A237E),
+          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
           title: Text(
             'Выберите формат',
             style: GoogleFonts.montserrat(
-              color: Colors.white,
+              color: hikRed,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -154,7 +160,7 @@ class _OrdersPageState extends State<OrdersPage>
                 title: Text(
                   'Отправить в Excel',
                   style: GoogleFonts.montserrat(
-                    color: Colors.white,
+                    color: darkGray,
                   ),
                 ),
                 onTap: () {
@@ -164,7 +170,7 @@ class _OrdersPageState extends State<OrdersPage>
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
-                tileColor: Colors.white.withOpacity(0.05),
+                tileColor: lightGray,
               ),
               SizedBox(height: 10),
               ListTile(
@@ -172,7 +178,7 @@ class _OrdersPageState extends State<OrdersPage>
                 title: Text(
                   'Отправить в PDF',
                   style: GoogleFonts.montserrat(
-                    color: Colors.white,
+                    color: darkGray,
                   ),
                 ),
                 onTap: () {
@@ -182,7 +188,7 @@ class _OrdersPageState extends State<OrdersPage>
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
-                tileColor: Colors.white.withOpacity(0.05),
+                tileColor: lightGray,
               ),
             ],
           ),
@@ -192,7 +198,7 @@ class _OrdersPageState extends State<OrdersPage>
               child: Text(
                 'Отмена',
                 style: GoogleFonts.montserrat(
-                  color: Colors.white70,
+                  color: visionGray,
                 ),
               ),
             ),
@@ -293,7 +299,7 @@ class _OrdersPageState extends State<OrdersPage>
           message,
           style: GoogleFonts.montserrat(),
         ),
-        backgroundColor: isError ? Colors.red.shade700 : Color(0xFF303F9F),
+        backgroundColor: isError ? hikRed : visionGray,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
@@ -315,21 +321,21 @@ class _OrdersPageState extends State<OrdersPage>
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: Color(0xFF1A237E),
+          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
           title: Text(
             'Подтверждение удаления',
             style: GoogleFonts.montserrat(
-              color: Colors.white,
+              color: hikRed,
               fontWeight: FontWeight.bold,
             ),
           ),
           content: Text(
             'Вы уверены, что хотите удалить этот заказ?',
             style: GoogleFonts.montserrat(
-              color: Colors.white.withOpacity(0.7),
+              color: darkGray,
             ),
           ),
           actions: [
@@ -338,7 +344,7 @@ class _OrdersPageState extends State<OrdersPage>
               child: Text(
                 'Отмена',
                 style: GoogleFonts.montserrat(
-                  color: Colors.white70,
+                  color: visionGray,
                 ),
               ),
             ),
@@ -348,7 +354,7 @@ class _OrdersPageState extends State<OrdersPage>
                 _deleteOrder(orderId);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red.shade700,
+                backgroundColor: hikRed,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -374,7 +380,7 @@ class _OrdersPageState extends State<OrdersPage>
       builder: (BuildContext context) {
         return Container(
           decoration: BoxDecoration(
-            color: Color(0xFF1A237E),
+            color: Colors.white,
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(20),
               topRight: Radius.circular(20),
@@ -388,7 +394,7 @@ class _OrdersPageState extends State<OrdersPage>
                 width: 40,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.3),
+                  color: visionGray.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
@@ -396,7 +402,7 @@ class _OrdersPageState extends State<OrdersPage>
               Text(
                 'Действия с заказом',
                 style: GoogleFonts.montserrat(
-                  color: Colors.white,
+                  color: hikRed,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -404,7 +410,7 @@ class _OrdersPageState extends State<OrdersPage>
               SizedBox(height: 20),
               _buildActionTile(
                 icon: Icons.visibility_outlined,
-                color: Colors.blue,
+                color: visionGray,
                 title: 'Просмотр деталей',
                 onTap: () {
                   Navigator.pop(context);
@@ -418,7 +424,7 @@ class _OrdersPageState extends State<OrdersPage>
               ),
               _buildActionTile(
                 icon: Icons.edit_outlined,
-                color: Colors.amber,
+                color: visionGray,
                 title: 'Редактировать',
                 onTap: () {
                   Navigator.pop(context);
@@ -432,7 +438,7 @@ class _OrdersPageState extends State<OrdersPage>
               ),
               _buildActionTile(
                 icon: Icons.send_outlined,
-                color: Colors.green,
+                color: hikRed,
                 title: 'Отправить по телеграмму',
                 onTap: () {
                   Navigator.pop(context);
@@ -452,7 +458,7 @@ class _OrdersPageState extends State<OrdersPage>
               if (!order.isConfirmed && !order.isRejected)
                 _buildActionTile(
                   icon: Icons.cancel_outlined,
-                  color: Colors.red,
+                  color: hikRed,
                   title: 'Отклонить заказ',
                   onTap: () {
                     Navigator.pop(context);
@@ -461,7 +467,7 @@ class _OrdersPageState extends State<OrdersPage>
                 ),
               _buildActionTile(
                 icon: Icons.delete_outline,
-                color: Colors.red,
+                color: hikRed,
                 title: 'Удалить заказ',
                 onTap: () {
                   Navigator.pop(context);
@@ -486,7 +492,7 @@ class _OrdersPageState extends State<OrdersPage>
       leading: Container(
         padding: EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.2),
+          color: color.withOpacity(0.1),
           shape: BoxShape.circle,
         ),
         child: Icon(
@@ -497,7 +503,7 @@ class _OrdersPageState extends State<OrdersPage>
       title: Text(
         title,
         style: GoogleFonts.montserrat(
-          color: Colors.white,
+          color: darkGray,
         ),
       ),
       onTap: onTap,
@@ -514,18 +520,18 @@ class _OrdersPageState extends State<OrdersPage>
         chipIcon = Icons.check_circle;
         break;
       case 'Отклонен':
-        chipColor = Colors.red;
+        chipColor = hikRed;
         chipIcon = Icons.cancel;
         break;
       default:
-        chipColor = Colors.orange;
+        chipColor = visionGray;
         chipIcon = Icons.pending;
     }
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: chipColor.withOpacity(0.2),
+        color: chipColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -558,21 +564,21 @@ class _OrdersPageState extends State<OrdersPage>
         children: [
           Icon(
             icon,
-            color: Colors.white.withOpacity(0.5),
+            color: visionGray,
             size: 14,
           ),
           SizedBox(width: 4),
           Text(
             '$title: ',
             style: GoogleFonts.montserrat(
-              color: Colors.white.withOpacity(0.7),
+              color: visionGray,
               fontSize: 12,
             ),
           ),
           Text(
             value,
             style: GoogleFonts.montserrat(
-              color: Colors.white,
+              color: isHighlighted ? hikRed : darkGray,
               fontSize: 12,
               fontWeight: isHighlighted ? FontWeight.bold : FontWeight.normal,
             ),
@@ -612,15 +618,15 @@ class _OrdersPageState extends State<OrdersPage>
         chipIcon = Icons.check_circle;
         break;
       case 'Отклонен':
-        chipColor = Colors.red;
+        chipColor = hikRed;
         chipIcon = Icons.cancel;
         break;
       case 'Не обработан':
-        chipColor = Colors.orange;
+        chipColor = visionGray;
         chipIcon = Icons.pending;
         break;
       default:
-        chipColor = Color(0xFFFF4081);
+        chipColor = hikRed;
         chipIcon = Icons.all_inclusive;
     }
 
@@ -635,12 +641,10 @@ class _OrdersPageState extends State<OrdersPage>
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected
-              ? chipColor.withOpacity(0.2)
-              : Colors.white.withOpacity(0.05),
+          color: isSelected ? chipColor.withOpacity(0.1) : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? chipColor : Colors.white.withOpacity(0.1),
+            color: isSelected ? chipColor : visionGray.withOpacity(0.2),
             width: 1,
           ),
         ),
@@ -649,14 +653,14 @@ class _OrdersPageState extends State<OrdersPage>
           children: [
             Icon(
               chipIcon,
-              color: isSelected ? chipColor : Colors.white.withOpacity(0.7),
+              color: isSelected ? chipColor : visionGray,
               size: 16,
             ),
             SizedBox(width: 6),
             Text(
               status,
               style: GoogleFonts.montserrat(
-                color: isSelected ? chipColor : Colors.white.withOpacity(0.7),
+                color: isSelected ? chipColor : visionGray,
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
@@ -669,8 +673,8 @@ class _OrdersPageState extends State<OrdersPage>
 
   Widget _buildLoadingShimmer() {
     return Shimmer.fromColors(
-      baseColor: Colors.white.withOpacity(0.1),
-      highlightColor: Colors.white.withOpacity(0.2),
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
       child: ListView.builder(
         padding: const EdgeInsets.all(16.0),
         itemCount: 5,
@@ -695,15 +699,15 @@ class _OrdersPageState extends State<OrdersPage>
         children: [
           Icon(
             Icons.assignment_outlined,
-            size: 80,
-            color: Colors.white.withOpacity(0.3),
+            size: 70,
+            color: visionGray.withOpacity(0.3),
           ),
           SizedBox(height: 16),
           Text(
             'Нет заказов в выбранной категории',
             style: GoogleFonts.montserrat(
-              color: Colors.white.withOpacity(0.7),
-              fontSize: 16,
+              color: visionGray,
+              fontSize: 14,
             ),
             textAlign: TextAlign.center,
           ),
@@ -718,7 +722,7 @@ class _OrdersPageState extends State<OrdersPage>
             icon: Icon(Icons.refresh),
             label: Text('Показать все заказы'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFFFF4081),
+              backgroundColor: hikRed,
               foregroundColor: Colors.white,
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               shape: RoundedRectangleBorder(
@@ -734,10 +738,9 @@ class _OrdersPageState extends State<OrdersPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.transparent,
+        backgroundColor: hikRed,
         title: Text(
           'Заказы',
           style: GoogleFonts.montserrat(
@@ -756,356 +759,342 @@ class _OrdersPageState extends State<OrdersPage>
         ],
       ),
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF1A237E), // Темно-синий
-              Color(0xFF3949AB), // Индиго
-              Color(0xFF303F9F), // Синий
-            ],
-          ),
-        ),
+        color: Colors.grey[100],
         child: FadeTransition(
           opacity: _fadeAnimation,
-          child: SafeArea(
-            child: Column(
-              children: [
-                _buildFilterChips(),
-                Expanded(
-                  child: _isRefreshing
-                      ? _buildLoadingShimmer()
-                      : FutureBuilder<List<Order>>(
-                          future: _orders,
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return _buildLoadingShimmer();
-                            } else if (snapshot.hasError) {
-                              return Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Text(
-                                    'Ошибка: ${snapshot.error}',
-                                    style: GoogleFonts.montserrat(
-                                      color: Colors.white,
-                                    ),
-                                    textAlign: TextAlign.center,
+          child: Column(
+            children: [
+              _buildFilterChips(),
+              Expanded(
+                child: _isRefreshing
+                    ? _buildLoadingShimmer()
+                    : FutureBuilder<List<Order>>(
+                        future: _orders,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return _buildLoadingShimmer();
+                          } else if (snapshot.hasError) {
+                            return Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Text(
+                                  'Ошибка: ${snapshot.error}',
+                                  style: GoogleFonts.montserrat(
+                                    color: darkGray,
                                   ),
+                                  textAlign: TextAlign.center,
                                 ),
-                              );
-                            } else if (snapshot.hasData) {
-                              final orders = snapshot.data!;
+                              ),
+                            );
+                          } else if (snapshot.hasData) {
+                            final orders = snapshot.data!;
 
-                              if (orders.isEmpty) {
-                                return _buildEmptyState();
-                              }
+                            if (orders.isEmpty) {
+                              return _buildEmptyState();
+                            }
 
-                              return RefreshIndicator(
-                                onRefresh: _refreshOrders,
-                                color: Color(0xFFFF4081),
-                                backgroundColor: Colors.white,
-                                child: ListView.builder(
-                                  padding: const EdgeInsets.all(16.0),
-                                  itemCount: orders.length,
-                                  physics: AlwaysScrollableScrollPhysics(),
-                                  itemBuilder: (context, index) {
-                                    final order = orders[index];
-                                    final warrantyDaysLeft =
-                                        order.warrantyDaysLeft != null
-                                            ? '${order.warrantyDaysLeft} дней'
-                                            : 'Нет гарантии';
-                                    final status = order.isConfirmed
-                                        ? 'Подтвержден'
-                                        : order.isRejected
-                                            ? 'Отклонен'
-                                            : 'Не обработан';
+                            return RefreshIndicator(
+                              onRefresh: _refreshOrders,
+                              color: hikRed,
+                              backgroundColor: Colors.white,
+                              child: ListView.builder(
+                                padding: const EdgeInsets.all(16.0),
+                                itemCount: orders.length,
+                                physics: AlwaysScrollableScrollPhysics(),
+                                itemBuilder: (context, index) {
+                                  final order = orders[index];
+                                  final warrantyDaysLeft =
+                                      order.warrantyDaysLeft != null
+                                          ? '${order.warrantyDaysLeft} дней'
+                                          : 'Нет гарантии';
+                                  final status = order.isConfirmed
+                                      ? 'Подтвержден'
+                                      : order.isRejected
+                                          ? 'Отклонен'
+                                          : 'Не обработан';
 
-                                    return Animate(
-                                      effects: [
-                                        FadeEffect(
-                                            duration: 300.ms,
-                                            delay: (50 * index).ms)
-                                      ],
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  OrderDetailPage(
-                                                      orderId: order.id),
-                                            ),
-                                          );
-                                        },
-                                        onLongPress: () {
-                                          _showOrderOptions(order);
-                                        },
-                                        child: Container(
-                                          margin:
-                                              const EdgeInsets.only(bottom: 12),
-                                          decoration: BoxDecoration(
-                                            color:
-                                                Colors.white.withOpacity(0.05),
-                                            borderRadius:
-                                                BorderRadius.circular(16),
-                                            border: Border.all(
-                                              color:
-                                                  Colors.white.withOpacity(0.1),
-                                              width: 1,
-                                            ),
+                                  return Animate(
+                                    effects: [
+                                      FadeEffect(
+                                          duration: 300.ms,
+                                          delay: (50 * index).ms)
+                                    ],
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                OrderDetailPage(
+                                                    orderId: order.id),
                                           ),
-                                          child: Column(
-                                            children: [
-                                              // Заголовок карточки заказа
-                                              Padding(
-                                                padding:
-                                                    const EdgeInsets.all(16.0),
-                                                child: Row(
-                                                  children: [
-                                                    Container(
-                                                      width: 50,
-                                                      height: 50,
-                                                      decoration: BoxDecoration(
-                                                        color: Color(0xFFFF4081)
-                                                            .withOpacity(0.2),
-                                                        shape: BoxShape.circle,
-                                                      ),
-                                                      child: Center(
-                                                        child: Icon(
-                                                          Icons
-                                                              .shopping_bag_outlined,
-                                                          color:
-                                                              Color(0xFFFF4081),
-                                                          size: 24,
-                                                        ),
+                                        );
+                                      },
+                                      onLongPress: () {
+                                        _showOrderOptions(order);
+                                      },
+                                      child: Container(
+                                        margin:
+                                            const EdgeInsets.only(bottom: 12),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius:
+                                              BorderRadius.circular(16),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black
+                                                  .withOpacity(0.05),
+                                              blurRadius: 8,
+                                              offset: Offset(0, 3),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            // Заголовок карточки заказа
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.all(16.0),
+                                              child: Row(
+                                                children: [
+                                                  Container(
+                                                    width: 50,
+                                                    height: 50,
+                                                    decoration: BoxDecoration(
+                                                      color: hikRed
+                                                          .withOpacity(0.1),
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                    child: Center(
+                                                      child: Icon(
+                                                        Icons
+                                                            .shopping_bag_outlined,
+                                                        color: hikRed,
+                                                        size: 24,
                                                       ),
                                                     ),
-                                                    SizedBox(width: 16),
-                                                    Expanded(
-                                                      child: Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          Text(
-                                                            order.client,
-                                                            style: GoogleFonts
-                                                                .montserrat(
-                                                              color:
-                                                                  Colors.white,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold,
-                                                              fontSize: 16,
-                                                            ),
-                                                            maxLines: 1,
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                          ),
-                                                          SizedBox(height: 4),
-                                                          _buildStatusChip(
-                                                              status),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                    IconButton(
-                                                      icon: Icon(
-                                                        Icons.more_vert,
-                                                        color: Colors.white
-                                                            .withOpacity(0.7),
-                                                      ),
-                                                      onPressed: () {
-                                                        _showOrderOptions(
-                                                            order);
-                                                      },
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-
-                                              // Детали заказа
-                                              Padding(
-                                                padding:
-                                                    const EdgeInsets.fromLTRB(
-                                                        16, 0, 16, 16),
-                                                child: Column(
-                                                  children: [
-                                                    Row(
+                                                  ),
+                                                  SizedBox(width: 16),
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
                                                       children: [
-                                                        Expanded(
-                                                          child: Column(
-                                                            crossAxisAlignment:
-                                                                CrossAxisAlignment
-                                                                    .start,
-                                                            children: [
-                                                              _buildInfoRow(
-                                                                  Icons
-                                                                      .attach_money,
-                                                                  'НДС',
-                                                                  '${order.vat}%'),
-                                                              _buildInfoRow(
-                                                                  Icons
-                                                                      .monetization_on,
-                                                                  'Доп. расходы',
-                                                                  '${order.additionalExpenses}%'),
-                                                              _buildInfoRow(
-                                                                  Icons.shield,
-                                                                  'Гарантия',
-                                                                  warrantyDaysLeft),
-                                                            ],
+                                                        Text(
+                                                          order.client,
+                                                          style: GoogleFonts
+                                                              .montserrat(
+                                                            color: darkGray,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            fontSize: 16,
                                                           ),
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
                                                         ),
-                                                        Expanded(
-                                                          child: Column(
-                                                            crossAxisAlignment:
-                                                                CrossAxisAlignment
-                                                                    .start,
-                                                            children: [
-                                                              _buildInfoRow(
-                                                                  Icons
-                                                                      .money_off,
-                                                                  'Расходы',
-                                                                  '${order.additionalExpensesAmount?.toStringAsFixed(2) ?? "0.00"}'),
-                                                              _buildInfoRow(
-                                                                  Icons
-                                                                      .money_off,
-                                                                  'Без НДС',
-                                                                  '${order.totalPriceWithoutVat ?? "0.00"}'),
-                                                              _buildInfoRow(
-                                                                  Icons
-                                                                      .attach_money,
-                                                                  'Итого',
-                                                                  '${order.totalPriceWithVat ?? "0.00"}',
-                                                                  isHighlighted:
-                                                                      true),
-                                                            ],
-                                                          ),
-                                                        ),
+                                                        SizedBox(height: 4),
+                                                        _buildStatusChip(
+                                                            status),
                                                       ],
                                                     ),
+                                                  ),
+                                                  IconButton(
+                                                    icon: Icon(
+                                                      Icons.more_vert,
+                                                      color: visionGray,
+                                                    ),
+                                                    onPressed: () {
+                                                      _showOrderOptions(order);
+                                                    },
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
 
-                                                    // Кнопки действий
-                                                    if (!order.isConfirmed &&
-                                                        !order.isRejected)
-                                                      Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .only(
-                                                                top: 12.0),
-                                                        child: Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .end,
+                                            // Детали заказа
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.fromLTRB(
+                                                      16, 0, 16, 16),
+                                              child: Column(
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
                                                           children: [
-                                                            ElevatedButton.icon(
-                                                              onPressed: () =>
-                                                                  _rejectOrder(
-                                                                      order.id),
-                                                              icon: Icon(
-                                                                  Icons
-                                                                      .cancel_outlined,
-                                                                  size: 16),
-                                                              label: Text(
-                                                                  'Отклонить'),
-                                                              style:
-                                                                  ElevatedButton
-                                                                      .styleFrom(
-                                                                backgroundColor:
-                                                                    Colors.red
-                                                                        .shade700
-                                                                        .withOpacity(
-                                                                            0.8),
-                                                                padding: EdgeInsets
-                                                                    .symmetric(
-                                                                        horizontal:
-                                                                            12,
-                                                                        vertical:
-                                                                            6),
-                                                                shape:
-                                                                    RoundedRectangleBorder(
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              20),
-                                                                ),
-                                                                textStyle:
-                                                                    GoogleFonts
-                                                                        .montserrat(
-                                                                  fontSize: 12,
-                                                                ),
-                                                              ),
-                                                            ),
-                                                            SizedBox(width: 8),
-                                                            ElevatedButton.icon(
-                                                              onPressed: () =>
-                                                                  _confirmOrder(
-                                                                      order.id),
-                                                              icon: Icon(
-                                                                  Icons
-                                                                      .check_circle_outline,
-                                                                  size: 16),
-                                                              label: Text(
-                                                                  'Подтвердить'),
-                                                              style:
-                                                                  ElevatedButton
-                                                                      .styleFrom(
-                                                                backgroundColor:
-                                                                    Colors.green
-                                                                        .shade700
-                                                                        .withOpacity(
-                                                                            0.8),
-                                                                padding: EdgeInsets
-                                                                    .symmetric(
-                                                                        horizontal:
-                                                                            12,
-                                                                        vertical:
-                                                                            6),
-                                                                shape:
-                                                                    RoundedRectangleBorder(
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              20),
-                                                                ),
-                                                                textStyle:
-                                                                    GoogleFonts
-                                                                        .montserrat(
-                                                                  fontSize: 12,
-                                                                ),
-                                                              ),
-                                                            ),
+                                                            _buildInfoRow(
+                                                                Icons
+                                                                    .attach_money,
+                                                                'НДС',
+                                                                '${order.vat}%'),
+                                                            _buildInfoRow(
+                                                                Icons
+                                                                    .monetization_on,
+                                                                'Доп. расходы',
+                                                                '${order.additionalExpenses}%'),
+                                                            _buildInfoRow(
+                                                                Icons.shield,
+                                                                'Гарантия',
+                                                                warrantyDaysLeft),
                                                           ],
                                                         ),
                                                       ),
-                                                  ],
-                                                ),
+                                                      Expanded(
+                                                        child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            _buildInfoRow(
+                                                                Icons.money_off,
+                                                                'Расходы',
+                                                                '${order.additionalExpensesAmount?.toStringAsFixed(2) ?? "0.00"}'),
+                                                            _buildInfoRow(
+                                                                Icons.money_off,
+                                                                'Без НДС',
+                                                                '${order.totalPriceWithoutVat ?? "0.00"}'),
+                                                            _buildInfoRow(
+                                                                Icons
+                                                                    .attach_money,
+                                                                'Итого',
+                                                                '${order.totalPriceWithVat ?? "0.00"}',
+                                                                isHighlighted:
+                                                                    true),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  if (!order.isConfirmed &&
+                                                      !order.isRejected)
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              top: 12.0),
+                                                      child: Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .end,
+                                                        children: [
+                                                          ElevatedButton.icon(
+                                                            onPressed: () =>
+                                                                _rejectOrder(
+                                                                    order.id),
+                                                            icon: Icon(
+                                                              Icons
+                                                                  .cancel_outlined,
+                                                              color:
+                                                                  Colors.white,
+                                                              size: 14,
+                                                            ),
+                                                            label: Text(
+                                                              'Отклонить',
+                                                              style: GoogleFonts
+                                                                  .montserrat(
+                                                                color: Colors
+                                                                    .white,
+                                                                fontSize: 12,
+                                                              ),
+                                                            ),
+                                                            style:
+                                                                ElevatedButton
+                                                                    .styleFrom(
+                                                              backgroundColor:
+                                                                  hikRed,
+                                                              foregroundColor:
+                                                                  Colors.white,
+                                                              // Устанавливает белый цвет для текста и иконки
+                                                              padding: EdgeInsets
+                                                                  .symmetric(
+                                                                horizontal: 12,
+                                                                vertical: 6,
+                                                              ),
+                                                              shape:
+                                                                  RoundedRectangleBorder(
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            20),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          SizedBox(width: 8),
+                                                          ElevatedButton.icon(
+                                                            onPressed: () =>
+                                                                _confirmOrder(
+                                                                    order.id),
+                                                            icon: Icon(
+                                                              Icons
+                                                                  .check_circle_outline,
+                                                              color:
+                                                                  Colors.white,
+                                                              size: 14,
+                                                            ),
+                                                            label: Text(
+                                                              'Подтвердить',
+                                                              style: GoogleFonts
+                                                                  .montserrat(
+                                                                color: Colors
+                                                                    .white,
+                                                                fontSize: 12,
+                                                              ),
+                                                            ),
+                                                            style:
+                                                                ElevatedButton
+                                                                    .styleFrom(
+                                                              backgroundColor:
+                                                                  Colors.green,
+                                                              foregroundColor:
+                                                                  Colors.white,
+                                                              padding: EdgeInsets
+                                                                  .symmetric(
+                                                                horizontal: 12,
+                                                                vertical: 6,
+                                                              ),
+                                                              shape:
+                                                                  RoundedRectangleBorder(
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            20),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                ],
                                               ),
-                                            ],
-                                          ),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                    );
-                                  },
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                          } else {
+                            return Center(
+                              child: Text(
+                                'Нет доступных данных',
+                                style: GoogleFonts.montserrat(
+                                  color: darkGray,
                                 ),
-                              );
-                            } else {
-                              return Center(
-                                child: Text(
-                                  'Нет доступных данных',
-                                  style: GoogleFonts.montserrat(
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              );
-                            }
-                          },
-                        ),
-                ),
-              ],
-            ),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+              ),
+            ],
           ),
         ),
       ),
@@ -1116,8 +1105,11 @@ class _OrdersPageState extends State<OrdersPage>
             MaterialPageRoute(builder: (context) => const AddOrderPage()),
           );
         },
-        backgroundColor: Color(0xFFFF4081),
-        child: const Icon(Icons.add),
+        backgroundColor: hikRed,
+        child: const Icon(
+          Icons.add,
+          color: Colors.white,
+        ),
       ),
     );
   }

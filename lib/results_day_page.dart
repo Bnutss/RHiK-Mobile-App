@@ -23,12 +23,18 @@ class _ResultsDayPageState extends State<ResultsDayPage>
   late Animation<double> _fadeAnimation;
   int _selectedTabIndex = 0;
 
+  // Используем ту же цветовую схему, что и в LoginPage
+  final Color hikRed = Color(0xFFE31E24);
+  final Color visionGray = Color(0xFF707070);
+  final Color darkGray = Color(0xFF333333);
+  final Color lightGray = Color(0xFFF5F5F5);
+
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 1500),
     );
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
@@ -57,13 +63,13 @@ class _ResultsDayPageState extends State<ResultsDayPage>
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
-              primary: Color(0xFFFF4081),
+            colorScheme: ColorScheme.light(
+              primary: hikRed,
               onPrimary: Colors.white,
-              surface: Color(0xFF1A237E),
-              onSurface: Colors.white,
+              surface: Colors.white,
+              onSurface: darkGray,
             ),
-            dialogBackgroundColor: Color(0xFF1A237E),
+            dialogBackgroundColor: Colors.white,
           ),
           child: child!,
         );
@@ -144,25 +150,14 @@ class _ResultsDayPageState extends State<ResultsDayPage>
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.error_outline, color: Colors.white),
-            SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                message,
-                style: GoogleFonts.montserrat(),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.red.shade700,
+        content: Text(message),
+        backgroundColor: hikRed,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
         ),
         margin: EdgeInsets.all(16),
-        duration: Duration(seconds: 3),
+        elevation: 8,
       ),
     );
   }
@@ -181,83 +176,155 @@ class _ResultsDayPageState extends State<ResultsDayPage>
     }
 
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        title: Text(
-          'Итоги дня',
-          style: GoogleFonts.montserrat(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
+      body: Stack(
+        children: [
+          // Фоновый градиент как в LoginPage
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white,
+                  Colors.grey[100]!,
+                  Colors.grey[200]!,
+                ],
+              ),
+            ),
           ),
-        ),
-        iconTheme: IconThemeData(color: Colors.white),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.calendar_today, color: Colors.white),
-            onPressed: () => _selectDateRange(context),
-            tooltip: 'Выбрать период',
+          // Декоративные круги как в LoginPage
+          Positioned(
+            top: -100,
+            right: -100,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: hikRed.withOpacity(0.05),
+              ),
+            ),
           ),
-          IconButton(
-            icon: Icon(Icons.refresh, color: Colors.white),
-            onPressed: _refreshOrders,
-            tooltip: 'Обновить',
+          Positioned(
+            bottom: -80,
+            left: -80,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: visionGray.withOpacity(0.05),
+              ),
+            ),
           ),
-        ],
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF1A237E), // Темно-синий
-              Color(0xFF3949AB), // Индиго
-              Color(0xFF303F9F), // Синий
-            ],
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: 150,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    hikRed.withOpacity(0.9),
+                    hikRed.withOpacity(0.0),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: FadeTransition(
-            opacity: _fadeAnimation,
+          SafeArea(
             child: Column(
               children: [
-                // Показываем выбранный период дат
+                // AppBar
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 12.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.arrow_back, color: darkGray),
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                          Text(
+                            'Итоги дня',
+                            style: GoogleFonts.montserrat(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: darkGray,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.calendar_today, color: darkGray),
+                            onPressed: () => _selectDateRange(context),
+                            tooltip: 'Выбрать период',
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.refresh, color: darkGray),
+                            onPressed: _refreshOrders,
+                            tooltip: 'Обновить',
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                // Период дат
                 Container(
                   margin: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: Offset(0, 5),
+                      ),
+                    ],
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
                         Icons.date_range,
-                        color: Colors.white.withOpacity(0.8),
+                        color: visionGray,
                         size: 18,
                       ),
                       SizedBox(width: 8),
                       Text(
                         dateRangeText,
                         style: GoogleFonts.montserrat(
-                          color: Colors.white,
+                          color: darkGray,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
                 ),
-
-                // Табы для разных видов отображения
+                // Переключатель вкладок
                 Container(
                   margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(20),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: Offset(0, 5),
+                      ),
+                    ],
                   ),
                   child: Row(
                     children: [
@@ -266,20 +333,21 @@ class _ResultsDayPageState extends State<ResultsDayPage>
                     ],
                   ),
                 ),
-
-                // Контент на основе выбранного таба
+                // Контент
                 Expanded(
-                  child: _selectedTabIndex == 0
-                      ? _buildOrdersList()
-                      : _buildStatisticsView(),
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: _selectedTabIndex == 0
+                        ? _buildOrdersList()
+                        : _buildStatisticsView(),
+                  ),
                 ),
-
-                // Итоговая сумма внизу экрана
+                // Итоговая сумма
                 _buildTotalSumBar(),
               ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -295,18 +363,16 @@ class _ResultsDayPageState extends State<ResultsDayPage>
           });
         },
         child: Container(
-          padding: EdgeInsets.symmetric(vertical: 12),
+          padding: EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
-            color: isSelected
-                ? Color(0xFFFF4081).withOpacity(0.8)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
+            color: isSelected ? hikRed : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Center(
             child: Text(
               title,
               style: GoogleFonts.montserrat(
-                color: Colors.white,
+                color: isSelected ? Colors.white : visionGray,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
@@ -327,8 +393,8 @@ class _ResultsDayPageState extends State<ResultsDayPage>
 
     return RefreshIndicator(
       onRefresh: _refreshOrders,
-      color: Color(0xFFFF4081),
-      backgroundColor: Color(0xFF1A237E),
+      color: hikRed,
+      backgroundColor: Colors.white,
       child: ListView.builder(
         padding: const EdgeInsets.all(16.0),
         itemCount: orders.length,
@@ -342,26 +408,30 @@ class _ResultsDayPageState extends State<ResultsDayPage>
           return Container(
             margin: EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.1),
-              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: Offset(0, 5),
+                ),
+              ],
             ),
             child: ListTile(
               contentPadding:
-                  EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               leading: Container(
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: Color(0xFFFF4081).withOpacity(0.2),
+                  color: hikRed.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
                   child: Icon(
                     Icons.shopping_bag_outlined,
-                    color: Color(0xFFFF4081),
+                    color: hikRed,
                     size: 24,
                   ),
                 ),
@@ -369,7 +439,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
               title: Text(
                 'Клиент: ${order['client']}',
                 style: GoogleFonts.montserrat(
-                  color: Colors.white,
+                  color: darkGray,
                   fontWeight: FontWeight.w600,
                   fontSize: 16,
                 ),
@@ -389,7 +459,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
                       Text(
                         'Стоимость: ${order['total_price_with_vat']}',
                         style: GoogleFonts.montserrat(
-                          color: Colors.white.withOpacity(0.7),
+                          color: visionGray,
                           fontSize: 14,
                         ),
                       ),
@@ -400,14 +470,14 @@ class _ResultsDayPageState extends State<ResultsDayPage>
                     children: [
                       Icon(
                         Icons.calendar_today,
-                        color: Colors.white.withOpacity(0.5),
+                        color: visionGray,
                         size: 16,
                       ),
                       SizedBox(width: 4),
                       Text(
                         formattedDate,
                         style: GoogleFonts.montserrat(
-                          color: Colors.white.withOpacity(0.5),
+                          color: visionGray,
                           fontSize: 12,
                         ),
                       ),
@@ -417,7 +487,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
               ),
               trailing: Icon(
                 Icons.arrow_forward_ios,
-                color: Colors.white.withOpacity(0.3),
+                color: visionGray,
                 size: 16,
               ),
               onTap: () {
@@ -439,7 +509,6 @@ class _ResultsDayPageState extends State<ResultsDayPage>
       return _buildEmptyState();
     }
 
-    // Группируем данные по дням для графика
     Map<String, double> dailyTotals = {};
     for (var order in orders) {
       DateTime orderDate = DateTime.parse(order['created_at']);
@@ -461,15 +530,18 @@ class _ResultsDayPageState extends State<ResultsDayPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Карточка с графиком продаж
           Container(
-            padding: EdgeInsets.all(16),
+            padding: EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.1),
-              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: Offset(0, 5),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -477,7 +549,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
                 Text(
                   'Продажи по дням',
                   style: GoogleFonts.montserrat(
-                    color: Colors.white,
+                    color: darkGray,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
@@ -494,12 +566,12 @@ class _ResultsDayPageState extends State<ResultsDayPage>
                       barTouchData: BarTouchData(
                         enabled: true,
                         touchTooltipData: BarTouchTooltipData(
-                          tooltipBgColor: Color(0xFF1A237E).withOpacity(0.8),
+                          tooltipBgColor: Colors.white,
                           getTooltipItem: (group, groupIndex, rod, rodIndex) {
                             return BarTooltipItem(
                               '${days[groupIndex]}\n',
                               GoogleFonts.montserrat(
-                                color: Colors.white,
+                                color: darkGray,
                                 fontWeight: FontWeight.bold,
                               ),
                               children: <TextSpan>[
@@ -507,7 +579,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
                                   text:
                                       '${values[groupIndex].toStringAsFixed(2)}',
                                   style: GoogleFonts.montserrat(
-                                    color: Colors.white,
+                                    color: hikRed,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -528,7 +600,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
                                   child: Text(
                                     days[value.toInt()],
                                     style: GoogleFonts.montserrat(
-                                      color: Colors.white.withOpacity(0.7),
+                                      color: visionGray,
                                       fontSize: 11,
                                     ),
                                   ),
@@ -546,7 +618,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
                               return Text(
                                 value.toInt().toString(),
                                 style: GoogleFonts.montserrat(
-                                  color: Colors.white.withOpacity(0.5),
+                                  color: visionGray,
                                   fontSize: 10,
                                 ),
                               );
@@ -566,7 +638,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
                             : 20,
                         getDrawingHorizontalLine: (value) {
                           return FlLine(
-                            color: Colors.white.withOpacity(0.1),
+                            color: lightGray,
                             strokeWidth: 1,
                           );
                         },
@@ -579,7 +651,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
                           barRods: [
                             BarChartRodData(
                               toY: values[index],
-                              color: Color(0xFFFF4081),
+                              color: hikRed,
                               width: 15,
                               borderRadius: BorderRadius.only(
                                 topLeft: Radius.circular(4),
@@ -591,7 +663,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
                                     ? values.reduce((a, b) => a > b ? a : b) *
                                         1.2
                                     : 100,
-                                color: Colors.white.withOpacity(0.1),
+                                color: lightGray,
                               ),
                             ),
                           ],
@@ -603,18 +675,19 @@ class _ResultsDayPageState extends State<ResultsDayPage>
               ],
             ),
           ),
-
           SizedBox(height: 20),
-
-          // Карточка с общей статистикой
           Container(
-            padding: EdgeInsets.all(16),
+            padding: EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.1),
-              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: Offset(0, 5),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -622,7 +695,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
                 Text(
                   'Основная статистика',
                   style: GoogleFonts.montserrat(
-                    color: Colors.white,
+                    color: darkGray,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
@@ -639,7 +712,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
                   icon: Icons.attach_money,
                   title: 'Общая сумма',
                   value: totalSum.toStringAsFixed(2),
-                  color: Color(0xFFFF4081),
+                  color: hikRed,
                 ),
                 SizedBox(height: 12),
                 _buildStatCard(
@@ -667,15 +740,22 @@ class _ResultsDayPageState extends State<ResultsDayPage>
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
             padding: EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
+              color: color.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -691,7 +771,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
               Text(
                 title,
                 style: GoogleFonts.montserrat(
-                  color: Colors.white.withOpacity(0.7),
+                  color: visionGray,
                   fontSize: 14,
                 ),
               ),
@@ -699,7 +779,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
               Text(
                 value,
                 style: GoogleFonts.montserrat(
-                  color: Colors.white,
+                  color: darkGray,
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
                 ),
@@ -719,28 +799,53 @@ class _ResultsDayPageState extends State<ResultsDayPage>
           Icon(
             Icons.search_off_outlined,
             size: 80,
-            color: Colors.white.withOpacity(0.3),
+            color: visionGray.withOpacity(0.3),
           ),
           SizedBox(height: 16),
           Text(
             'Нет данных за выбранный период',
             style: GoogleFonts.montserrat(
-              color: Colors.white.withOpacity(0.7),
+              color: visionGray,
               fontSize: 16,
             ),
             textAlign: TextAlign.center,
           ),
           SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () => _selectDateRange(context),
-            icon: Icon(Icons.calendar_today),
-            label: Text('Выбрать другой период'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFFFF4081),
-              foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
+          Container(
+            width: 220,
+            height: 50,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                colors: [
+                  hikRed,
+                  hikRed.withOpacity(0.8),
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: hikRed.withOpacity(0.3),
+                  blurRadius: 15,
+                  offset: Offset(0, 8),
+                ),
+              ],
+            ),
+            child: ElevatedButton.icon(
+              onPressed: () => _selectDateRange(context),
+              icon: Icon(Icons.calendar_today, color: Colors.white),
+              label: Text(
+                'Выбрать другой период',
+                style: GoogleFonts.montserrat(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
             ),
           ),
@@ -751,8 +856,8 @@ class _ResultsDayPageState extends State<ResultsDayPage>
 
   Widget _buildLoadingShimmer() {
     return Shimmer.fromColors(
-      baseColor: Colors.white.withOpacity(0.1),
-      highlightColor: Colors.white.withOpacity(0.2),
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
       child: ListView.builder(
         padding: const EdgeInsets.all(16.0),
         itemCount: 5,
@@ -774,10 +879,10 @@ class _ResultsDayPageState extends State<ResultsDayPage>
     return Container(
       padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
       decoration: BoxDecoration(
-        color: Color(0xFF1A237E),
+        color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: Offset(0, -3),
           ),
@@ -789,7 +894,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
           Text(
             'Общая сумма:',
             style: GoogleFonts.montserrat(
-              color: Colors.white,
+              color: darkGray,
               fontSize: 16,
               fontWeight: FontWeight.w500,
             ),
@@ -797,13 +902,13 @@ class _ResultsDayPageState extends State<ResultsDayPage>
           Container(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: Color(0xFFFF4081).withOpacity(0.2),
-              borderRadius: BorderRadius.circular(20),
+              color: hikRed.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
             ),
             child: Text(
               '${totalSum.toStringAsFixed(2)}',
               style: GoogleFonts.montserrat(
-                color: Colors.white,
+                color: hikRed,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -823,22 +928,28 @@ class _ResultsDayPageState extends State<ResultsDayPage>
         return Container(
           height: MediaQuery.of(context).size.height * 0.7,
           decoration: BoxDecoration(
-            color: Color(0xFF1A237E),
+            color: Colors.white,
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(24),
               topRight: Radius.circular(24),
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: Offset(0, -5),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
               Container(
                 padding: EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   border: Border(
                     bottom: BorderSide(
-                      color: Colors.white.withOpacity(0.1),
+                      color: lightGray,
                       width: 1,
                     ),
                   ),
@@ -849,13 +960,13 @@ class _ResultsDayPageState extends State<ResultsDayPage>
                     Text(
                       'Детали заказа',
                       style: GoogleFonts.montserrat(
-                        color: Colors.white,
+                        color: darkGray,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     IconButton(
-                      icon: Icon(Icons.close, color: Colors.white),
+                      icon: Icon(Icons.close, color: visionGray),
                       onPressed: () {
                         Navigator.pop(context);
                       },
@@ -863,8 +974,6 @@ class _ResultsDayPageState extends State<ResultsDayPage>
                   ],
                 ),
               ),
-
-              // Content
               Expanded(
                 child: SingleChildScrollView(
                   padding: EdgeInsets.all(20),
@@ -877,7 +986,6 @@ class _ResultsDayPageState extends State<ResultsDayPage>
                         value: order['client'] ?? 'Не указан',
                         iconColor: Colors.blue,
                       ),
-
                       _buildDetailItem(
                         icon: Icons.calendar_today,
                         title: 'Дата заказа',
@@ -886,22 +994,18 @@ class _ResultsDayPageState extends State<ResultsDayPage>
                         ),
                         iconColor: Colors.amber,
                       ),
-
                       _buildDetailItem(
                         icon: Icons.attach_money,
                         title: 'Стоимость',
                         value: '${order['total_price_with_vat']}',
                         iconColor: Colors.green,
                       ),
-
                       _buildDetailItem(
                         icon: Icons.receipt_long,
                         title: 'Номер заказа',
                         value: '#${order['id']}',
-                        iconColor: Color(0xFFFF4081),
+                        iconColor: hikRed,
                       ),
-
-                      // Если есть дополнительные детали, добавляем их
                       if (order['products'] != null &&
                           order['products'] is List)
                         ..._buildProductsSection(order['products']),
@@ -922,7 +1026,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
       Text(
         'Товары',
         style: GoogleFonts.montserrat(
-          color: Colors.white,
+          color: darkGray,
           fontSize: 18,
           fontWeight: FontWeight.bold,
         ),
@@ -937,7 +1041,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
       margin: EdgeInsets.only(bottom: 10),
       padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: lightGray,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -945,12 +1049,12 @@ class _ResultsDayPageState extends State<ResultsDayPage>
           Container(
             padding: EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Color(0xFF4CAF50).withOpacity(0.2),
+              color: hikRed.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.shopping_cart_outlined,
-              color: Color(0xFF4CAF50),
+              color: hikRed,
               size: 20,
             ),
           ),
@@ -962,7 +1066,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
                 Text(
                   product['name'] ?? 'Товар',
                   style: GoogleFonts.montserrat(
-                    color: Colors.white,
+                    color: darkGray,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -970,7 +1074,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
                 Text(
                   'Количество: ${product['quantity']} × ${product['price']}',
                   style: GoogleFonts.montserrat(
-                    color: Colors.white.withOpacity(0.7),
+                    color: visionGray,
                     fontSize: 12,
                   ),
                 ),
@@ -980,7 +1084,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
           Text(
             '${(product['quantity'] * product['price']).toStringAsFixed(2)}',
             style: GoogleFonts.montserrat(
-              color: Colors.white,
+              color: darkGray,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -1003,7 +1107,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
           Container(
             padding: EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.2),
+              color: iconColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -1020,7 +1124,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
                 Text(
                   title,
                   style: GoogleFonts.montserrat(
-                    color: Colors.white.withOpacity(0.7),
+                    color: visionGray,
                     fontSize: 14,
                   ),
                 ),
@@ -1028,7 +1132,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
                 Text(
                   value,
                   style: GoogleFonts.montserrat(
-                    color: Colors.white,
+                    color: darkGray,
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                   ),

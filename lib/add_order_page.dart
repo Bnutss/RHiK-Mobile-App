@@ -25,12 +25,18 @@ class _AddOrderPageState extends State<AddOrderPage>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
+  // Используем ту же цветовую схему, что и в LoginPage
+  final Color hikRed = Color(0xFFE31E24);
+  final Color visionGray = Color(0xFF707070);
+  final Color darkGray = Color(0xFF333333);
+  final Color lightGray = Color(0xFFF5F5F5);
+
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 1500),
     );
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
@@ -120,12 +126,13 @@ class _AddOrderPageState extends State<AddOrderPage>
           message,
           style: GoogleFonts.montserrat(),
         ),
-        backgroundColor: isError ? Colors.red.shade700 : Color(0xFF303F9F),
+        backgroundColor: isError ? hikRed : visionGray,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
         ),
         margin: EdgeInsets.all(16),
+        elevation: 8,
         action: isError
             ? null
             : SnackBarAction(
@@ -140,229 +147,288 @@ class _AddOrderPageState extends State<AddOrderPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        title: Text(
-          'Добавить заказ',
-          style: GoogleFonts.montserrat(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
+      body: Stack(
+        children: [
+          // Фоновый градиент как в LoginPage
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white,
+                  Colors.grey[100]!,
+                  Colors.grey[200]!,
+                ],
+              ),
+            ),
           ),
-        ),
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF1A237E), // Темно-синий
-              Color(0xFF3949AB), // Индиго
-              Color(0xFF303F9F), // Синий
-            ],
+          // Декоративные круги как в LoginPage
+          Positioned(
+            top: -100,
+            right: -100,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: hikRed.withOpacity(0.05),
+              ),
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Заголовок страницы
-                    Center(
-                      child: Container(
-                        padding: EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.1),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.add_shopping_cart,
-                              color: Color(0xFFFF4081),
-                              size: 30,
-                            ),
-                            SizedBox(width: 12),
-                            Text(
-                              'Создание нового заказа',
-                              style: GoogleFonts.montserrat(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                        .animate()
-                        .fadeIn(duration: 400.ms)
-                        .slideY(begin: -0.1, end: 0),
-
-                    SizedBox(height: 30),
-
-                    // Форма добавления
-                    Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _buildFormField(
-                            controller: _clientController,
-                            label: 'Клиент',
-                            hint: 'Введите имя клиента',
-                            icon: Icons.person_outline,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Введите имя клиента';
-                              }
-                              return null;
-                            },
-                            delay: 100,
-                          ),
-
-                          SizedBox(height: 20),
-
-                          _buildFormField(
-                            controller: _vatController,
-                            label: 'НДС (%)',
-                            hint: 'Введите процент НДС',
-                            icon: Icons.attach_money,
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value != null && value.isNotEmpty) {
-                                if (double.tryParse(value) == null) {
-                                  return 'Введите корректное число';
-                                }
-                              }
-                              return null;
-                            },
-                            delay: 200,
-                          ),
-
-                          SizedBox(height: 20),
-
-                          _buildFormField(
-                            controller: _additionalExpensesController,
-                            label: 'Прочие расходы (%)',
-                            hint: 'Введите процент дополнительных расходов',
-                            icon: Icons.account_balance_wallet_outlined,
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value != null && value.isNotEmpty) {
-                                if (double.tryParse(value) == null) {
-                                  return 'Введите корректное число';
-                                }
-                              }
-                              return null;
-                            },
-                            delay: 300,
-                          ),
-
-                          SizedBox(height: 40),
-
-                          // Кнопка создания
-                          Container(
-                            height: 60,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Color(0xFFFF4081), // Розовый
-                                  Color(0xFFF50057), // Малиновый
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(15),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Color(0xFFFF4081).withOpacity(0.3),
-                                  blurRadius: 10,
-                                  offset: Offset(0, 5),
-                                ),
-                              ],
-                            ),
-                            child: ElevatedButton.icon(
-                              onPressed: _isCreating ? null : _submitOrder,
-                              icon: _isCreating
-                                  ? SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                                Colors.white),
-                                      ),
-                                    )
-                                  : Icon(Icons.add_circle_outline,
-                                      color: Colors.white),
-                              label: Text(
-                                _isCreating ? 'Создание...' : 'Создать заказ',
-                                style: GoogleFonts.montserrat(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                shadowColor: Colors.transparent,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                              ),
-                            ),
-                          )
-                              .animate()
-                              .fadeIn(duration: 400.ms, delay: 400.ms)
-                              .slideY(begin: 0.1, end: 0),
-
-                          SizedBox(height: 20),
-
-                          // Кнопка отмены
-                          OutlinedButton.icon(
-                            onPressed: () => Navigator.of(context).pop(),
-                            icon: Icon(Icons.cancel_outlined,
-                                color: Colors.white70),
-                            label: Text(
-                              'Отменить',
-                              style: GoogleFonts.montserrat(
-                                fontSize: 16,
-                                color: Colors.white70,
-                              ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(vertical: 15),
-                              side: BorderSide(color: Colors.white30),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                            ),
-                          ).animate().fadeIn(duration: 400.ms, delay: 500.ms),
-
-                          SizedBox(height: 20),
-                        ],
-                      ),
-                    ),
+          Positioned(
+            bottom: -80,
+            left: -80,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: visionGray.withOpacity(0.05),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: 150,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    hikRed.withOpacity(0.9),
+                    hikRed.withOpacity(0.0),
                   ],
                 ),
               ),
             ),
           ),
-        ),
+          SafeArea(
+            child: Column(
+              children: [
+                // AppBar
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 12.0),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.arrow_back, color: darkGray),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      Text(
+                        'Добавить заказ',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: darkGray,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Контент
+                Expanded(
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Center(
+                              child: Container(
+                                padding: EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 10,
+                                      offset: Offset(0, 5),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.add_shopping_cart,
+                                      color: hikRed,
+                                      size: 30,
+                                    ),
+                                    SizedBox(width: 12),
+                                    Text(
+                                      'Создание нового заказа',
+                                      style: GoogleFonts.montserrat(
+                                        color: darkGray,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                                .animate()
+                                .fadeIn(duration: 400.ms)
+                                .slideY(begin: -0.1, end: 0),
+                            SizedBox(height: 30),
+                            Form(
+                              key: _formKey,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _buildFormField(
+                                    controller: _clientController,
+                                    label: 'Клиент',
+                                    hint: 'Введите имя клиента',
+                                    icon: Icons.person_outline,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Введите имя клиента';
+                                      }
+                                      return null;
+                                    },
+                                    delay: 100,
+                                  ),
+                                  SizedBox(height: 20),
+                                  _buildFormField(
+                                    controller: _vatController,
+                                    label: 'НДС (%)',
+                                    hint: 'Введите процент НДС',
+                                    icon: Icons.attach_money,
+                                    keyboardType: TextInputType.number,
+                                    validator: (value) {
+                                      if (value != null && value.isNotEmpty) {
+                                        if (double.tryParse(value) == null) {
+                                          return 'Введите корректное число';
+                                        }
+                                      }
+                                      return null;
+                                    },
+                                    delay: 200,
+                                  ),
+                                  SizedBox(height: 20),
+                                  _buildFormField(
+                                    controller: _additionalExpensesController,
+                                    label: 'Прочие расходы (%)',
+                                    hint:
+                                        'Введите процент дополнительных расходов',
+                                    icon: Icons.account_balance_wallet_outlined,
+                                    keyboardType: TextInputType.number,
+                                    validator: (value) {
+                                      if (value != null && value.isNotEmpty) {
+                                        if (double.tryParse(value) == null) {
+                                          return 'Введите корректное число';
+                                        }
+                                      }
+                                      return null;
+                                    },
+                                    delay: 300,
+                                  ),
+                                  SizedBox(height: 40),
+                                  Container(
+                                    height: 60,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16),
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          hikRed,
+                                          hikRed.withOpacity(0.8),
+                                        ],
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: hikRed.withOpacity(0.3),
+                                          blurRadius: 15,
+                                          offset: Offset(0, 8),
+                                        ),
+                                      ],
+                                    ),
+                                    child: ElevatedButton.icon(
+                                      onPressed:
+                                          _isCreating ? null : _submitOrder,
+                                      icon: _isCreating
+                                          ? SizedBox(
+                                              width: 20,
+                                              height: 20,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                        Color>(Colors.white),
+                                              ),
+                                            )
+                                          : Icon(Icons.add_circle_outline,
+                                              color: Colors.white),
+                                      label: Text(
+                                        _isCreating
+                                            ? 'Создание...'
+                                            : 'Создать заказ',
+                                        style: GoogleFonts.montserrat(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.transparent,
+                                        shadowColor: Colors.transparent,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(16),
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                      .animate()
+                                      .fadeIn(duration: 400.ms, delay: 400.ms)
+                                      .slideY(begin: 0.1, end: 0),
+                                  SizedBox(height: 20),
+                                  OutlinedButton.icon(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(),
+                                    icon: Icon(Icons.cancel_outlined,
+                                        color: visionGray),
+                                    label: Text(
+                                      'Отменить',
+                                      style: GoogleFonts.montserrat(
+                                        fontSize: 16,
+                                        color: visionGray,
+                                      ),
+                                    ),
+                                    style: OutlinedButton.styleFrom(
+                                      padding:
+                                          EdgeInsets.symmetric(vertical: 15),
+                                      side: BorderSide(
+                                          color: visionGray.withOpacity(0.3)),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                    ),
+                                  )
+                                      .animate()
+                                      .fadeIn(duration: 400.ms, delay: 500.ms),
+                                  SizedBox(height: 20),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -393,7 +459,7 @@ class _AddOrderPageState extends State<AddOrderPage>
             child: Text(
               label,
               style: GoogleFonts.montserrat(
-                color: Colors.white,
+                color: darkGray,
                 fontWeight: FontWeight.w500,
                 fontSize: 16,
               ),
@@ -401,32 +467,39 @@ class _AddOrderPageState extends State<AddOrderPage>
           ),
           TextFormField(
             controller: controller,
-            style: TextStyle(color: Colors.white),
+            style: TextStyle(color: darkGray),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: TextStyle(color: Colors.white54),
-              prefixIcon: Icon(icon, color: Colors.white70),
+              hintStyle: TextStyle(color: visionGray.withOpacity(0.5)),
+              prefixIcon: Icon(icon, color: visionGray),
               filled: true,
-              fillColor: Colors.white.withOpacity(0.1),
+              fillColor: Colors.white,
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
-                borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: lightGray),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
-                borderSide: BorderSide(color: Color(0xFFFF4081)),
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: hikRed),
               ),
               errorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
-                borderSide: BorderSide(color: Colors.red.shade300),
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: hikRed.withOpacity(0.7)),
               ),
               focusedErrorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
-                borderSide: BorderSide(color: Colors.red.shade300),
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: hikRed.withOpacity(0.7)),
               ),
-              errorStyle: TextStyle(color: Colors.red.shade300),
+              errorStyle: TextStyle(color: hikRed),
               contentPadding:
                   EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              disabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: lightGray),
+              ),
             ),
             keyboardType: keyboardType,
             validator: validator,

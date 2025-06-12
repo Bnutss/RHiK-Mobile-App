@@ -21,12 +21,18 @@ class _ConfidentialityPageState extends State<ConfidentialityPage>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
+  // Используем ту же цветовую схему, что и в LoginPage
+  final Color hikRed = Color(0xFFE31E24);
+  final Color visionGray = Color(0xFF707070);
+  final Color darkGray = Color(0xFF333333);
+  final Color lightGray = Color(0xFFF5F5F5);
+
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 1500),
     );
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
@@ -112,13 +118,13 @@ class _ConfidentialityPageState extends State<ConfidentialityPage>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Color(0xFF303F9F),
+        backgroundColor: hikRed,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
         ),
         margin: EdgeInsets.all(16),
-        duration: Duration(seconds: 2),
+        elevation: 8,
       ),
     );
   }
@@ -126,42 +132,102 @@ class _ConfidentialityPageState extends State<ConfidentialityPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        title: Text(
-          'Конфиденциальность',
-          style: GoogleFonts.montserrat(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
+      body: Stack(
+        children: [
+          // Фоновый градиент как в LoginPage
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white,
+                  Colors.grey[100]!,
+                  Colors.grey[200]!,
+                ],
+              ),
+            ),
           ),
-        ),
-        iconTheme: IconThemeData(
-          color: Colors.white,
-        ),
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF1A237E), // Темно-синий
-              Color(0xFF3949AB), // Индиго
-              Color(0xFF303F9F), // Синий
-            ],
+          // Декоративные круги как в LoginPage
+          Positioned(
+            top: -100,
+            right: -100,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: hikRed.withOpacity(0.05),
+              ),
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: _isAuthenticated
-                ? _buildAuthenticatedContent()
-                : _buildAuthenticationRequest(),
+          Positioned(
+            bottom: -80,
+            left: -80,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: visionGray.withOpacity(0.05),
+              ),
+            ),
           ),
-        ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: 150,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    hikRed.withOpacity(0.9),
+                    hikRed.withOpacity(0.0),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Column(
+              children: [
+                // AppBar
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 12.0),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.arrow_back, color: darkGray),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      Text(
+                        'Конфиденциальность',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: darkGray,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Контент страницы
+                Expanded(
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: _isAuthenticated
+                        ? _buildAuthenticatedContent()
+                        : _buildAuthenticationRequest(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -174,53 +240,45 @@ class _ConfidentialityPageState extends State<ConfidentialityPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Заголовок
             Center(
               child: Container(
                 width: 100,
                 height: 100,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
+                  color: hikRed.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.security_outlined,
                   size: 50,
-                  color: Colors.white,
+                  color: hikRed,
                 ),
               ),
             ),
-
             SizedBox(height: 20),
-
             Center(
               child: Text(
                 'Настройки конфиденциальности',
                 style: GoogleFonts.montserrat(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: darkGray,
                 ),
                 textAlign: TextAlign.center,
               ),
             ),
-
             SizedBox(height: 10),
-
             Center(
               child: Text(
                 'Настройте параметры безопасности для вашей учетной записи',
                 style: GoogleFonts.montserrat(
                   fontSize: 14,
-                  color: Colors.white.withOpacity(0.7),
+                  color: visionGray,
                 ),
                 textAlign: TextAlign.center,
               ),
             ),
-
             SizedBox(height: 40),
-
-            // Биометрическая аутентификация
             _buildSettingsSection(
               'Аутентификация',
               [
@@ -248,10 +306,7 @@ class _ConfidentialityPageState extends State<ConfidentialityPage>
                 ),
               ],
             ),
-
             SizedBox(height: 20),
-
-            // Пароли и безопасность
             _buildSettingsSection(
               'Пароли и безопасность',
               [
@@ -273,10 +328,7 @@ class _ConfidentialityPageState extends State<ConfidentialityPage>
                 ),
               ],
             ),
-
             SizedBox(height: 20),
-
-            // Конфиденциальность данных
             _buildSettingsSection(
               'Конфиденциальность данных',
               [
@@ -319,8 +371,6 @@ class _ConfidentialityPageState extends State<ConfidentialityPage>
               height: 200,
               child: Lottie.asset(
                 'assets/animations/fingerprint.json',
-                // Если у вас нет этой анимации, замените на:
-                // child: Icon(Icons.fingerprint, size: 150, color: Colors.white),
               ),
             ),
             SizedBox(height: 30),
@@ -329,7 +379,7 @@ class _ConfidentialityPageState extends State<ConfidentialityPage>
               style: GoogleFonts.montserrat(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: darkGray,
               ),
               textAlign: TextAlign.center,
             ),
@@ -338,7 +388,7 @@ class _ConfidentialityPageState extends State<ConfidentialityPage>
               'Пожалуйста, пройдите биометрическую аутентификацию для доступа к настройкам конфиденциальности.',
               style: GoogleFonts.montserrat(
                 fontSize: 16,
-                color: Colors.white.withOpacity(0.8),
+                color: visionGray,
               ),
               textAlign: TextAlign.center,
             ),
@@ -350,13 +400,13 @@ class _ConfidentialityPageState extends State<ConfidentialityPage>
                 borderRadius: BorderRadius.circular(16),
                 gradient: LinearGradient(
                   colors: [
-                    Color(0xFFFF4081), // Розовый
-                    Color(0xFFF50057), // Малиновый
+                    hikRed,
+                    hikRed.withOpacity(0.8),
                   ],
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Color(0xFFFF4081).withOpacity(0.5),
+                    color: hikRed.withOpacity(0.3),
                     blurRadius: 15,
                     offset: Offset(0, 8),
                   ),
@@ -399,18 +449,21 @@ class _ConfidentialityPageState extends State<ConfidentialityPage>
             style: GoogleFonts.montserrat(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Colors.white.withOpacity(0.7),
+              color: darkGray,
             ),
           ),
         ),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.1),
-              width: 1,
-            ),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: Offset(0, 5),
+              ),
+            ],
           ),
           child: Column(
             children: items,
@@ -427,34 +480,33 @@ class _ConfidentialityPageState extends State<ConfidentialityPage>
       required VoidCallback onTap}) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(16),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4.0),
         child: ListTile(
           leading: Container(
             padding: EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
+              color: hikRed.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: Colors.white, size: 22),
+            child: Icon(icon, color: hikRed, size: 22),
           ),
           title: Text(
             title,
             style: GoogleFonts.montserrat(
-              color: Colors.white,
+              color: darkGray,
               fontWeight: FontWeight.w500,
             ),
           ),
           subtitle: Text(
             subtitle,
             style: GoogleFonts.montserrat(
-              color: Colors.white.withOpacity(0.5),
+              color: visionGray,
               fontSize: 12,
             ),
           ),
-          trailing:
-              Icon(Icons.chevron_right, color: Colors.white.withOpacity(0.5)),
+          trailing: Icon(Icons.chevron_right, color: visionGray),
         ),
       ),
     );
@@ -472,32 +524,32 @@ class _ConfidentialityPageState extends State<ConfidentialityPage>
         leading: Container(
           padding: EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
+            color: hikRed.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, color: Colors.white, size: 22),
+          child: Icon(icon, color: hikRed, size: 22),
         ),
         title: Text(
           title,
           style: GoogleFonts.montserrat(
-            color: Colors.white,
+            color: darkGray,
             fontWeight: FontWeight.w500,
           ),
         ),
         subtitle: Text(
           subtitle,
           style: GoogleFonts.montserrat(
-            color: Colors.white.withOpacity(0.5),
+            color: visionGray,
             fontSize: 12,
           ),
         ),
         trailing: Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: Color(0xFFFF4081),
-          activeTrackColor: Color(0xFFFF4081).withOpacity(0.5),
+          activeColor: hikRed,
+          activeTrackColor: hikRed.withOpacity(0.5),
           inactiveThumbColor: Colors.white,
-          inactiveTrackColor: Colors.white.withOpacity(0.3),
+          inactiveTrackColor: visionGray.withOpacity(0.3),
         ),
       ),
     );
@@ -512,14 +564,14 @@ class _ConfidentialityPageState extends State<ConfidentialityPage>
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: Color(0xFF1A237E),
+          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
           ),
           title: Text(
             'Изменить пароль',
             style: GoogleFonts.montserrat(
-              color: Colors.white,
+              color: darkGray,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -531,15 +583,16 @@ class _ConfidentialityPageState extends State<ConfidentialityPage>
                 TextField(
                   controller: _currentPasswordController,
                   obscureText: !_showPassword,
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(color: darkGray),
                   decoration: InputDecoration(
                     labelText: 'Текущий пароль',
-                    labelStyle: TextStyle(color: Colors.white70),
+                    labelStyle: TextStyle(color: visionGray),
                     enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white30),
+                      borderSide:
+                          BorderSide(color: visionGray.withOpacity(0.3)),
                     ),
                     focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFFF4081)),
+                      borderSide: BorderSide(color: hikRed),
                     ),
                   ),
                 ),
@@ -547,15 +600,16 @@ class _ConfidentialityPageState extends State<ConfidentialityPage>
                 TextField(
                   controller: _newPasswordController,
                   obscureText: !_showPassword,
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(color: darkGray),
                   decoration: InputDecoration(
                     labelText: 'Новый пароль',
-                    labelStyle: TextStyle(color: Colors.white70),
+                    labelStyle: TextStyle(color: visionGray),
                     enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white30),
+                      borderSide:
+                          BorderSide(color: visionGray.withOpacity(0.3)),
                     ),
                     focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFFF4081)),
+                      borderSide: BorderSide(color: hikRed),
                     ),
                   ),
                 ),
@@ -563,15 +617,16 @@ class _ConfidentialityPageState extends State<ConfidentialityPage>
                 TextField(
                   controller: _confirmPasswordController,
                   obscureText: !_showPassword,
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(color: darkGray),
                   decoration: InputDecoration(
                     labelText: 'Подтвердите пароль',
-                    labelStyle: TextStyle(color: Colors.white70),
+                    labelStyle: TextStyle(color: visionGray),
                     enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white30),
+                      borderSide:
+                          BorderSide(color: visionGray.withOpacity(0.3)),
                     ),
                     focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFFF4081)),
+                      borderSide: BorderSide(color: hikRed),
                     ),
                   ),
                 ),
@@ -586,26 +641,38 @@ class _ConfidentialityPageState extends State<ConfidentialityPage>
               child: Text(
                 'Отмена',
                 style: GoogleFonts.montserrat(
-                  color: Colors.white70,
+                  color: visionGray,
                 ),
               ),
             ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _showSnackBar('Пароль успешно изменен');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFFF4081),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                gradient: LinearGradient(
+                  colors: [
+                    hikRed,
+                    hikRed.withOpacity(0.8),
+                  ],
                 ),
               ),
-              child: Text(
-                'Изменить',
-                style: GoogleFonts.montserrat(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _showSnackBar('Пароль успешно изменен');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: Text(
+                  'Изменить',
+                  style: GoogleFonts.montserrat(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
@@ -620,21 +687,21 @@ class _ConfidentialityPageState extends State<ConfidentialityPage>
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: Color(0xFF1A237E),
+          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
           ),
           title: Text(
             'Очистить кэш',
             style: GoogleFonts.montserrat(
-              color: Colors.white,
+              color: darkGray,
               fontWeight: FontWeight.bold,
             ),
           ),
           content: Text(
             'Вы уверены, что хотите очистить кэш приложения? Это не повлияет на ваши данные, но может потребоваться повторная загрузка некоторых элементов.',
             style: GoogleFonts.montserrat(
-              color: Colors.white.withOpacity(0.7),
+              color: visionGray,
             ),
           ),
           actions: [
@@ -645,26 +712,38 @@ class _ConfidentialityPageState extends State<ConfidentialityPage>
               child: Text(
                 'Отмена',
                 style: GoogleFonts.montserrat(
-                  color: Colors.white70,
+                  color: visionGray,
                 ),
               ),
             ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _showSnackBar('Кэш успешно очищен');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFFF4081),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                gradient: LinearGradient(
+                  colors: [
+                    hikRed,
+                    hikRed.withOpacity(0.8),
+                  ],
                 ),
               ),
-              child: Text(
-                'Очистить',
-                style: GoogleFonts.montserrat(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _showSnackBar('Кэш успешно очищен');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: Text(
+                  'Очистить',
+                  style: GoogleFonts.montserrat(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
@@ -679,21 +758,21 @@ class _ConfidentialityPageState extends State<ConfidentialityPage>
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: Color(0xFF1A237E),
+          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
           ),
           title: Text(
             'Скоро будет доступно',
             style: GoogleFonts.montserrat(
-              color: Colors.white,
+              color: darkGray,
               fontWeight: FontWeight.bold,
             ),
           ),
           content: Text(
             'Эта функция находится в разработке и будет доступна в ближайшем обновлении.',
             style: GoogleFonts.montserrat(
-              color: Colors.white.withOpacity(0.7),
+              color: visionGray,
             ),
           ),
           actions: [
@@ -704,7 +783,7 @@ class _ConfidentialityPageState extends State<ConfidentialityPage>
               child: Text(
                 'Понятно',
                 style: GoogleFonts.montserrat(
-                  color: Color(0xFFFF4081),
+                  color: hikRed,
                   fontWeight: FontWeight.bold,
                 ),
               ),
