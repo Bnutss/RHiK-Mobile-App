@@ -20,6 +20,7 @@ class _EditOrderPageState extends State<EditOrderPage>
   final _clientController = TextEditingController();
   final _vatController = TextEditingController();
   final _additionalExpensesController = TextEditingController();
+  final _advanceController = TextEditingController();
 
   bool _isLoading = true;
   bool _isSaving = false;
@@ -54,6 +55,7 @@ class _EditOrderPageState extends State<EditOrderPage>
     _clientController.dispose();
     _vatController.dispose();
     _additionalExpensesController.dispose();
+    _advanceController.dispose();
     _animationController.dispose();
     super.dispose();
   }
@@ -93,6 +95,8 @@ class _EditOrderPageState extends State<EditOrderPage>
           _vatController.text = (orderData['vat'] ?? 0).toString();
           _additionalExpensesController.text =
               (orderData['additional_expenses'] ?? 0).toString();
+          _advanceController.text =
+              orderData['advance'] != null ? orderData['advance'].toString() : '';
           _isLoading = false;
         });
       } else {
@@ -140,6 +144,9 @@ class _EditOrderPageState extends State<EditOrderPage>
             'vat': double.tryParse(_vatController.text) ?? 0.0,
             'additional_expenses':
                 double.tryParse(_additionalExpensesController.text) ?? 0.0,
+            'advance': _advanceController.text.isEmpty
+                ? null
+                : double.tryParse(_advanceController.text),
           }),
         );
 
@@ -391,6 +398,25 @@ class _EditOrderPageState extends State<EditOrderPage>
                                             return null;
                                           },
                                           delay: 300,
+                                        ),
+                                        SizedBox(height: 20),
+                                        _buildFormField(
+                                          controller: _advanceController,
+                                          label: 'Аванс',
+                                          hint: 'Введите сумму аванса',
+                                          icon: Icons.payments_outlined,
+                                          keyboardType: TextInputType.number,
+                                          validator: (value) {
+                                            if (value != null &&
+                                                value.isNotEmpty) {
+                                              if (double.tryParse(value) ==
+                                                  null) {
+                                                return 'Введите корректное число';
+                                              }
+                                            }
+                                            return null;
+                                          },
+                                          delay: 400,
                                         ),
                                         SizedBox(height: 40),
                                         Container(

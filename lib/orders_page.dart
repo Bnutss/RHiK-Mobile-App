@@ -939,6 +939,11 @@ class _OrdersPageState extends State<OrdersPage>
                                                                     .monetization_on,
                                                                 'Доп. расходы',
                                                                 '${order.additionalExpenses}%'),
+                                                            if (order.advance != null)
+                                                              _buildInfoRow(
+                                                                  Icons.payments_outlined,
+                                                                  'Аванс',
+                                                                  order.advance!.toStringAsFixed(2)),
                                                             _buildInfoRow(
                                                                 Icons.shield,
                                                                 'Гарантия',
@@ -1120,6 +1125,7 @@ class Order {
   final String client;
   final double vat;
   final double? additionalExpenses;
+  final double? advance;
   final bool isConfirmed;
   final bool isRejected;
   final int? warrantyDaysLeft;
@@ -1131,6 +1137,7 @@ class Order {
     required this.client,
     required this.vat,
     this.additionalExpenses,
+    this.advance,
     required this.isConfirmed,
     required this.isRejected,
     this.warrantyDaysLeft,
@@ -1148,6 +1155,9 @@ class Order {
       additionalExpenses: json['additional_expenses'] != null
           ? double.tryParse(json['additional_expenses'].toString()) ?? 0.0
           : 0.0,
+      advance: json['advance'] != null
+          ? double.tryParse(json['advance'].toString())
+          : null,
       isConfirmed: json['is_confirmed'],
       isRejected: json['is_rejected'],
       warrantyDaysLeft: json['warranty_days_left'],

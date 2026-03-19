@@ -21,6 +21,7 @@ class _AddOrderPageState extends State<AddOrderPage>
   final _clientController = TextEditingController();
   final _vatController = TextEditingController();
   final _additionalExpensesController = TextEditingController();
+  final _advanceController = TextEditingController();
   bool _isCreating = false;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -52,6 +53,7 @@ class _AddOrderPageState extends State<AddOrderPage>
     _clientController.dispose();
     _vatController.dispose();
     _additionalExpensesController.dispose();
+    _advanceController.dispose();
     _animationController.dispose();
     super.dispose();
   }
@@ -88,6 +90,9 @@ class _AddOrderPageState extends State<AddOrderPage>
             'additional_expenses': _additionalExpensesController.text.isEmpty
                 ? null
                 : double.tryParse(_additionalExpensesController.text),
+            'advance': _advanceController.text.isEmpty
+                ? null
+                : double.tryParse(_advanceController.text),
             'is_confirmed': false,
           }),
         );
@@ -332,6 +337,23 @@ class _AddOrderPageState extends State<AddOrderPage>
                                     },
                                     delay: 300,
                                   ),
+                                  SizedBox(height: 20),
+                                  _buildFormField(
+                                    controller: _advanceController,
+                                    label: 'Аванс',
+                                    hint: 'Введите сумму аванса',
+                                    icon: Icons.payments_outlined,
+                                    keyboardType: TextInputType.number,
+                                    validator: (value) {
+                                      if (value != null && value.isNotEmpty) {
+                                        if (double.tryParse(value) == null) {
+                                          return 'Введите корректное число';
+                                        }
+                                      }
+                                      return null;
+                                    },
+                                    delay: 400,
+                                  ),
                                   SizedBox(height: 40),
                                   Container(
                                     height: 60,
@@ -388,7 +410,7 @@ class _AddOrderPageState extends State<AddOrderPage>
                                     ),
                                   )
                                       .animate()
-                                      .fadeIn(duration: 400.ms, delay: 400.ms)
+                                      .fadeIn(duration: 400.ms, delay: 500.ms)
                                       .slideY(begin: 0.1, end: 0),
                                   SizedBox(height: 20),
                                   OutlinedButton.icon(
@@ -414,7 +436,7 @@ class _AddOrderPageState extends State<AddOrderPage>
                                     ),
                                   )
                                       .animate()
-                                      .fadeIn(duration: 400.ms, delay: 500.ms),
+                                      .fadeIn(duration: 400.ms, delay: 600.ms),
                                   SizedBox(height: 20),
                                 ],
                               ),

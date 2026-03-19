@@ -931,6 +931,29 @@ class _OrderDetailPageState extends State<OrderDetailPage>
               ),
             ],
           ),
+          if (orderDetails.advance != null) ...[
+            SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildSummaryItem(
+                    icon: Icons.payments_outlined,
+                    title: 'Аванс',
+                    value: orderDetails.advance!.toStringAsFixed(2),
+                    color: Colors.green,
+                  ),
+                ),
+                Expanded(
+                  child: _buildSummaryItem(
+                    icon: Icons.price_check,
+                    title: 'Остаток',
+                    value: (orderDetails.totalGeneralAmount - orderDetails.advance!).toStringAsFixed(2),
+                    color: visionGray,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -1497,6 +1520,7 @@ class OrderDetails {
   final String client;
   final double vat;
   final double additionalExpenses;
+  final double? advance;
   final List<OrderProduct> products;
   final double totalPriceWithoutVat;
   final double totalPriceWithVat;
@@ -1507,6 +1531,7 @@ class OrderDetails {
     required this.client,
     required this.vat,
     required this.additionalExpenses,
+    this.advance,
     required this.products,
     required this.totalPriceWithoutVat,
     required this.totalPriceWithVat,
@@ -1526,6 +1551,9 @@ class OrderDetails {
       additionalExpenses:
           double.tryParse(json['additional_expenses']?.toString() ?? '0.0') ??
               0.0,
+      advance: json['advance'] != null
+          ? double.tryParse(json['advance'].toString())
+          : null,
       products: productsList,
       totalPriceWithoutVat: double.tryParse(
               json['total_price_without_vat']?.toString() ?? '0.0') ??
