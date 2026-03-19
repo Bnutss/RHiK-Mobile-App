@@ -80,6 +80,7 @@ class _OrdersPageState extends State<OrdersPage>
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(utf8.decode(response.bodyBytes));
         List<Order> orders = data.map((json) => Order.fromJson(json)).toList();
+        orders.sort((a, b) => b.id.compareTo(a.id));
 
         if (_selectedStatus == 'Подтвержден') {
           orders = orders.where((order) => order.isConfirmed).toList();
