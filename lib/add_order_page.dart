@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'order_detail_page.dart';
+import 'widgets/app_toast.dart';
 
 class AddOrderPage extends StatefulWidget {
   final int? orderId;
@@ -128,29 +129,7 @@ class _AddOrderPageState extends State<AddOrderPage>
   }
 
   void _showSnackBar(String message, bool isError) {
-    ScaffoldMessenger.of(context).removeCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: GoogleFonts.montserrat(),
-        ),
-        backgroundColor: isError ? hikRed : visionGray,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        margin: EdgeInsets.all(16),
-        elevation: 8,
-        action: isError
-            ? null
-            : SnackBarAction(
-                label: 'OK',
-                textColor: Colors.white,
-                onPressed: () {},
-              ),
-      ),
-    );
+    showAppToast(context, message, isError: isError);
   }
 
   @override

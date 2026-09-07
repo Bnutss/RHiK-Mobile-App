@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
+import 'widgets/app_toast.dart';
 
 class ResultsDayPage extends StatefulWidget {
   @override
@@ -307,19 +308,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).removeCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: hikRed,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        margin: EdgeInsets.all(16),
-        elevation: 8,
-      ),
-    );
+    showAppToast(context, message, isError: true);
   }
 
   Future<void> _refreshOrders() async {

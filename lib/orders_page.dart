@@ -9,6 +9,7 @@ import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'order_detail_page.dart';
 import 'add_order_page.dart';
 import 'edit_order_page.dart';
+import 'widgets/app_toast.dart';
 
 class OrdersPage extends StatefulWidget {
   const OrdersPage({Key? key}) : super(key: key);
@@ -246,28 +247,7 @@ class _OrdersPageState extends State<OrdersPage>
   }
 
   void _showSnackBar(String message, {required bool isError}) {
-    ScaffoldMessenger.of(context).removeCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: GoogleFonts.montserrat(),
-        ),
-        backgroundColor: isError ? hikRed : visionGray,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        margin: EdgeInsets.all(16),
-        action: isError
-            ? null
-            : SnackBarAction(
-                label: 'OK',
-                textColor: Colors.white,
-                onPressed: () {},
-              ),
-      ),
-    );
+    showAppToast(context, message, isError: isError);
   }
 
   void _showDeleteConfirmation(int orderId) {

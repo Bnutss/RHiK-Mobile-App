@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
+import 'widgets/app_toast.dart';
 
 class PasswordsPage extends StatefulWidget {
   const PasswordsPage({Key? key}) : super(key: key);
@@ -458,28 +459,7 @@ class _PasswordsPageState extends State<PasswordsPage>
   }
 
   void _showSnackBar(String message, {required bool isError}) {
-    ScaffoldMessenger.of(context).removeCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: GoogleFonts.montserrat(),
-        ),
-        backgroundColor: isError ? hikRed : visionGray,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        margin: EdgeInsets.all(16),
-        action: isError
-            ? null
-            : SnackBarAction(
-                label: 'OK',
-                textColor: Colors.white,
-                onPressed: () {},
-              ),
-      ),
-    );
+    showAppToast(context, message, isError: isError);
   }
 
   void _copyToClipboard(String text, String type) {
