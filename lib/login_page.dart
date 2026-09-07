@@ -18,7 +18,6 @@ class _LoginPageState extends State<LoginPage>
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final LocalAuthentication auth = LocalAuthentication();
-  bool _canCheckBiometrics = false;
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _rememberMe = false; // New state for "Remember Me"
@@ -43,7 +42,6 @@ class _LoginPageState extends State<LoginPage>
       ),
     );
     _animationController.forward();
-    _checkBiometrics();
     _checkBiometricPreference();
     _loadSavedCredentials(); // Load saved credentials
   }
@@ -84,20 +82,6 @@ class _LoginPageState extends State<LoginPage>
     }
   }
 
-  Future<void> _checkBiometrics() async {
-    bool canCheckBiometrics;
-    try {
-      canCheckBiometrics = await auth.canCheckBiometrics;
-    } catch (e) {
-      canCheckBiometrics = false;
-    }
-    if (!mounted) return;
-
-    setState(() {
-      _canCheckBiometrics = canCheckBiometrics;
-    });
-  }
-
   Future<void> _checkBiometricPreference() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     bool? useBiometrics = prefs.getBool('useBiometrics');
@@ -111,10 +95,11 @@ class _LoginPageState extends State<LoginPage>
     bool authenticated = false;
     try {
       authenticated = await auth.authenticate(
-        localizedReason: 'Authenticate to login',
+        localizedReason: 'Войдите с помощью Face ID',
         options: const AuthenticationOptions(
           useErrorDialogs: true,
           stickyAuth: true,
+          biometricOnly: true,
         ),
       );
     } catch (e) {
@@ -124,8 +109,6 @@ class _LoginPageState extends State<LoginPage>
 
     if (authenticated) {
       _loginWithBiometrics();
-    } else {
-      _showError('Биометрическая аутентификация не удалась');
     }
   }
 
@@ -150,7 +133,7 @@ class _LoginPageState extends State<LoginPage>
 
   Future<void> _fetchUserData(String token) async {
     final userResponse = await http.get(
-      Uri.parse('https://rhik.pythonanywhere.com/api/user/'),
+      Uri.parse('http://26.6.96.21:8000/api/user/'),
       headers: <String, String>{
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -184,7 +167,7 @@ class _LoginPageState extends State<LoginPage>
     if (refreshToken != null) {
       try {
         final response = await http.post(
-          Uri.parse('https://rhik.pythonanywhere.com/api/token/refresh/'),
+          Uri.parse('http://26.6.96.21:8000/api/token/refresh/'),
           headers: <String, String>{
             'Content-Type': 'application/json',
           },
@@ -223,7 +206,7 @@ class _LoginPageState extends State<LoginPage>
 
     try {
       final response = await http.post(
-        Uri.parse('https://rhik.pythonanywhere.com/api/login/'),
+        Uri.parse('http://26.6.96.21:8000/api/login/'),
         headers: <String, String>{
           'Content-Type': 'application/json',
         },
@@ -260,6 +243,7 @@ class _LoginPageState extends State<LoginPage>
   }
 
   void _showError(String message) {
+    ScaffoldMessenger.of(context).removeCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -526,44 +510,6 @@ class _LoginPageState extends State<LoginPage>
                           ),
                         ),
                         SizedBox(height: 30),
-                        if (_canCheckBiometrics)
-                          GestureDetector(
-                            onTap: () => _authenticate(),
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                  vertical: 12, horizontal: 20),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(16),
-                                color: Colors.white,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 10,
-                                    offset: Offset(0, 5),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.fingerprint,
-                                    color: visionGray,
-                                    size: 30,
-                                  ),
-                                  SizedBox(width: 10),
-                                  Text(
-                                    'Войти с помощью биометрии',
-                                    style: GoogleFonts.montserrat(
-                                      color: visionGray,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
                       ],
                     ),
                   ),

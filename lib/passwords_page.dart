@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 
 class PasswordsPage extends StatefulWidget {
   const PasswordsPage({Key? key}) : super(key: key);
@@ -18,7 +20,6 @@ class _PasswordsPageState extends State<PasswordsPage>
   List<dynamic> passwords = [];
   List<dynamic> filteredPasswords = [];
   bool isLoading = true;
-  bool isSearching = false;
   TextEditingController searchController = TextEditingController();
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -29,7 +30,7 @@ class _PasswordsPageState extends State<PasswordsPage>
   final Color darkGray = Color(0xFF333333);
   final Color lightGray = Color(0xFFF5F5F5);
 
-  Map<int, bool> _passwordVisibility = {};
+  Map<int, bool> _expandedItems = {};
 
   @override
   void initState() {
@@ -77,22 +78,17 @@ class _PasswordsPageState extends State<PasswordsPage>
       }
 
       final response = await http.get(
-        Uri.parse('https://rhik.pythonanywhere.com/sales/api/passwords/'),
+        Uri.parse('http://26.6.96.21:8000/sales/api/passwords/'),
         headers: {
           'Authorization': 'Bearer $token',
         },
       );
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = json.decode(utf8.decode(response.bodyBytes));
         setState(() {
           passwords = data;
           filteredPasswords = data;
-
-          for (var password in data) {
-            _passwordVisibility[password['id']] = false;
-          }
-
           isLoading = false;
         });
       } else {
@@ -140,7 +136,7 @@ class _PasswordsPageState extends State<PasswordsPage>
     try {
       final response = id == null
           ? await http.post(
-              Uri.parse('https://rhik.pythonanywhere.com/sales/api/passwords/'),
+              Uri.parse('http://26.6.96.21:8000/sales/api/passwords/'),
               headers: {
                 'Authorization': 'Bearer $token',
                 'Content-Type': 'application/json',
@@ -152,8 +148,7 @@ class _PasswordsPageState extends State<PasswordsPage>
               }),
             )
           : await http.put(
-              Uri.parse(
-                  'https://rhik.pythonanywhere.com/sales/api/passwords/$id/'),
+              Uri.parse('http://26.6.96.21:8000/sales/api/passwords/$id/'),
               headers: {
                 'Authorization': 'Bearer $token',
                 'Content-Type': 'application/json',
@@ -191,149 +186,217 @@ class _PasswordsPageState extends State<PasswordsPage>
     bool _obscureNvr = true;
     bool _obscureCamera = true;
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            return AlertDialog(
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
               ),
-              title: Text(
-                password == null ? 'Добавить запись' : 'Редактировать запись',
-                style: GoogleFonts.montserrat(
-                  color: hikRed,
-                  fontWeight: FontWeight.bold,
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                 ),
-              ),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: organizationController,
-                      style: TextStyle(color: darkGray),
-                      decoration: InputDecoration(
-                        labelText: 'Название организации',
-                        labelStyle: TextStyle(color: visionGray),
-                        prefixIcon: Icon(Icons.business, color: visionGray),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide:
-                              BorderSide(color: visionGray.withOpacity(0.3)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: hikRed),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    TextField(
-                      controller: nvrController,
-                      obscureText: _obscureNvr,
-                      style: TextStyle(color: darkGray),
-                      decoration: InputDecoration(
-                        labelText: 'Пароль NVR',
-                        labelStyle: TextStyle(color: visionGray),
-                        prefixIcon: Icon(Icons.lock, color: visionGray),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscureNvr
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            color: visionGray,
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  12,
+                  20,
+                  20 + MediaQuery.of(context).padding.bottom,
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: visionGray.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          onPressed: () {
-                            setState(() {
-                              _obscureNvr = !_obscureNvr;
-                            });
-                          },
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide:
-                              BorderSide(color: visionGray.withOpacity(0.3)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: hikRed),
                         ),
                       ),
-                    ),
-                    SizedBox(height: 20),
-                    TextField(
-                      controller: cameraController,
-                      obscureText: _obscureCamera,
-                      style: TextStyle(color: darkGray),
-                      decoration: InputDecoration(
-                        labelText: 'Пароль камеры',
-                        labelStyle: TextStyle(color: visionGray),
-                        prefixIcon: Icon(Icons.videocam, color: visionGray),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscureCamera
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            color: visionGray,
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: hikRed.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              password == null
+                                  ? Icons.add_business_outlined
+                                  : Icons.edit_outlined,
+                              color: hikRed,
+                            ),
                           ),
-                          onPressed: () {
-                            setState(() {
-                              _obscureCamera = !_obscureCamera;
-                            });
-                          },
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide:
-                              BorderSide(color: visionGray.withOpacity(0.3)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: hikRed),
+                          const SizedBox(width: 12),
+                          Text(
+                            password == null
+                                ? 'Добавить запись'
+                                : 'Редактировать запись',
+                            style: GoogleFonts.montserrat(
+                              color: darkGray,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 17,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      TextField(
+                        controller: organizationController,
+                        style: TextStyle(color: darkGray),
+                        decoration: InputDecoration(
+                          labelText: 'Название организации',
+                          labelStyle: TextStyle(color: visionGray),
+                          prefixIcon: Icon(Icons.business, color: visionGray),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide:
+                                BorderSide(color: visionGray.withOpacity(0.3)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: hikRed),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                      SizedBox(height: 20),
+                      TextField(
+                        controller: nvrController,
+                        obscureText: _obscureNvr,
+                        style: TextStyle(color: darkGray),
+                        decoration: InputDecoration(
+                          labelText: 'Пароль NVR',
+                          labelStyle: TextStyle(color: visionGray),
+                          prefixIcon: Icon(Icons.lock, color: visionGray),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscureNvr
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                              color: visionGray,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscureNvr = !_obscureNvr;
+                              });
+                            },
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide:
+                                BorderSide(color: visionGray.withOpacity(0.3)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: hikRed),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                      TextField(
+                        controller: cameraController,
+                        obscureText: _obscureCamera,
+                        style: TextStyle(color: darkGray),
+                        decoration: InputDecoration(
+                          labelText: 'Пароль камеры',
+                          labelStyle: TextStyle(color: visionGray),
+                          prefixIcon: Icon(Icons.videocam, color: visionGray),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscureCamera
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                              color: visionGray,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscureCamera = !_obscureCamera;
+                              });
+                            },
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide:
+                                BorderSide(color: visionGray.withOpacity(0.3)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: hikRed),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: visionGray,
+                                side: BorderSide(
+                                    color: visionGray.withOpacity(0.3)),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: Text(
+                                'Отмена',
+                                style: GoogleFonts.montserrat(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                addOrEditPassword(
+                                  id: password?['id'],
+                                  organizationName:
+                                      organizationController.text.trim(),
+                                  nvrPassword: nvrController.text.trim(),
+                                  cameraPassword: cameraController.text.trim(),
+                                );
+                                Navigator.of(context).pop();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: hikRed,
+                                foregroundColor: Colors.white,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: Text(
+                                'Сохранить',
+                                style: GoogleFonts.montserrat(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text(
-                    'Отмена',
-                    style: GoogleFonts.montserrat(
-                      color: visionGray,
-                    ),
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    addOrEditPassword(
-                      id: password?['id'],
-                      organizationName: organizationController.text.trim(),
-                      nvrPassword: nvrController.text.trim(),
-                      cameraPassword: cameraController.text.trim(),
-                    );
-                    Navigator.of(context).pop();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: hikRed,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: Text(
-                    'Сохранить',
-                    style: GoogleFonts.montserrat(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
             );
           },
         );
@@ -352,7 +415,7 @@ class _PasswordsPageState extends State<PasswordsPage>
 
     try {
       final response = await http.delete(
-        Uri.parse('https://rhik.pythonanywhere.com/sales/api/passwords/$id/'),
+        Uri.parse('http://26.6.96.21:8000/sales/api/passwords/$id/'),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -362,7 +425,7 @@ class _PasswordsPageState extends State<PasswordsPage>
         setState(() {
           passwords.removeWhere((password) => password['id'] == id);
           filteredPasswords.removeWhere((password) => password['id'] == id);
-          _passwordVisibility.remove(id);
+          _expandedItems.remove(id);
         });
         _showSnackBar('Запись успешно удалена', isError: false);
       } else {
@@ -374,65 +437,28 @@ class _PasswordsPageState extends State<PasswordsPage>
   }
 
   // Метод для показа диалога и удаления через кнопку в интерфейсе
-  Future<void> deletePassword(int id) async {
-    bool confirmDelete = await showDialog(
+  void deletePassword(int id) {
+    AdaptiveAlertDialog.show(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Text(
-            'Подтверждение удаления',
-            style: GoogleFonts.montserrat(
-              color: hikRed,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: Text(
-            'Вы уверены, что хотите удалить эту запись?',
-            style: GoogleFonts.montserrat(
-              color: darkGray,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(
-                'Отмена',
-                style: GoogleFonts.montserrat(
-                  color: visionGray,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: hikRed,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: Text(
-                'Удалить',
-                style: GoogleFonts.montserrat(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+      title: 'Подтверждение удаления',
+      message: 'Вы уверены, что хотите удалить эту запись?',
+      actions: [
+        AlertAction(
+          title: 'Отмена',
+          style: AlertActionStyle.cancel,
+          onPressed: () {},
+        ),
+        AlertAction(
+          title: 'Удалить',
+          style: AlertActionStyle.destructive,
+          onPressed: () => _performDeletePassword(id),
+        ),
+      ],
     );
-
-    if (confirmDelete == true) {
-      await _performDeletePassword(id);
-    }
   }
 
   void _showSnackBar(String message, {required bool isError}) {
+    ScaffoldMessenger.of(context).removeCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -461,104 +487,120 @@ class _PasswordsPageState extends State<PasswordsPage>
     _showSnackBar('$type скопирован в буфер обмена', isError: false);
   }
 
-  void _togglePasswordVisibility(int id) {
-    setState(() {
-      _passwordVisibility[id] = !(_passwordVisibility[id] ?? false);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: hikRed,
-        title: isSearching
-            ? TextField(
-                controller: searchController,
-                style: GoogleFonts.montserrat(
-                  color: Colors.white,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Поиск по организации...',
-                  hintStyle: GoogleFonts.montserrat(
-                    color: Colors.white.withOpacity(0.7),
-                  ),
-                  border: InputBorder.none,
-                ),
-                onChanged: filterPasswords,
-                autofocus: true,
-              )
-            : Row(
-                children: [
-                  Icon(Icons.vpn_key_outlined, color: Colors.white),
-                  SizedBox(width: 8),
-                  Text(
-                    'Пароли (${filteredPasswords.length})',
-                    style: GoogleFonts.montserrat(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 22,
-                    ),
-                  ),
-                ],
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark,
+      child: AdaptiveScaffold(
+        useHeroBackButton: false,
+        appBar: AdaptiveAppBar(
+          useNativeToolbar: true,
+          title: 'Пароли (${filteredPasswords.length})',
+          actions: [
+            AdaptiveAppBarAction(
+              iosSymbol: 'plus',
+              icon: Icons.add,
+              onPressed: () => _showAddOrEditPasswordDialog(),
+            ),
+          ],
+        ),
+        body: Container(
+          color: Colors.grey[100],
+          child: Material(
+            type: MaterialType.transparency,
+            child: SafeArea(
+              minimum: EdgeInsets.only(
+                bottom: PlatformInfo.isIOS26OrHigher() ? 90.0 : 0.0,
               ),
-        iconTheme: IconThemeData(color: Colors.white),
-        actions: [
-          IconButton(
-            icon: Icon(isSearching ? Icons.close : Icons.search),
-            onPressed: () {
-              setState(() {
-                if (isSearching) {
-                  isSearching = false;
-                  searchController.clear();
-                  filterPasswords('');
-                } else {
-                  isSearching = true;
-                }
-              });
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: fetchPasswords,
-          ),
-        ],
-      ),
-      body: Container(
-        color: Colors.grey[100],
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: RefreshIndicator(
-            onRefresh: fetchPasswords,
-            color: hikRed,
-            backgroundColor: Colors.white,
-            child: Column(
-              children: [
-                Expanded(
-                  child: isLoading
-                      ? Center(
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(hikRed),
-                          ),
-                        )
-                      : filteredPasswords.isEmpty
-                          ? _buildEmptyState()
-                          : _buildPasswordsList(),
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: Column(
+                  children: [
+                    _buildSearchBar(),
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: fetchPasswords,
+                        color: hikRed,
+                        backgroundColor: Colors.white,
+                        child: isLoading
+                            ? Center(
+                                child: CircularProgressIndicator(
+                                  valueColor:
+                                      AlwaysStoppedAnimation<Color>(hikRed),
+                                ),
+                              )
+                            : filteredPasswords.isEmpty
+                                ? _buildEmptyState()
+                                : _buildPasswordsList(),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _showAddOrEditPasswordDialog();
-        },
-        backgroundColor: hikRed,
-        child: Icon(
-          Icons.add,
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Container(
+        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
           color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.search_rounded, size: 20, color: visionGray),
+            const SizedBox(width: 10),
+            Expanded(
+              child: TextField(
+                controller: searchController,
+                cursorColor: hikRed,
+                style: GoogleFonts.montserrat(color: darkGray, fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'Поиск по организации...',
+                  hintStyle: GoogleFonts.montserrat(
+                    color: visionGray.withOpacity(0.6),
+                    fontSize: 14,
+                  ),
+                  border: InputBorder.none,
+                  isDense: true,
+                ),
+                onChanged: (value) {
+                  filterPasswords(value);
+                  setState(() {});
+                },
+              ),
+            ),
+            if (searchController.text.isNotEmpty)
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  FocusScope.of(context).unfocus();
+                  searchController.clear();
+                  filterPasswords('');
+                  setState(() {});
+                },
+                child: Icon(
+                  Icons.close_rounded,
+                  size: 18,
+                  color: visionGray,
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -585,36 +627,27 @@ class _PasswordsPageState extends State<PasswordsPage>
             ),
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () {
-              if (searchController.text.isNotEmpty) {
+          if (searchController.text.isNotEmpty) ...[
+            SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () {
                 setState(() {
                   searchController.clear();
-                  isSearching = false;
                   filterPasswords('');
                 });
-              } else {
-                _showAddOrEditPasswordDialog();
-              }
-            },
-            icon: Icon(
-              searchController.text.isNotEmpty ? Icons.clear : Icons.add,
-            ),
-            label: Text(
-              searchController.text.isNotEmpty
-                  ? 'Очистить поиск'
-                  : 'Добавить пароль',
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: hikRed,
-              foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(50),
+              },
+              icon: Icon(Icons.clear),
+              label: Text('Очистить поиск'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: hikRed,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(50),
+                ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -628,7 +661,7 @@ class _PasswordsPageState extends State<PasswordsPage>
       itemBuilder: (context, index) {
         final password = filteredPasswords[index];
         final id = password['id'];
-        final isVisible = _passwordVisibility[id] ?? false;
+        final isExpanded = _expandedItems[id] ?? false;
 
         return Animate(
           effects: [FadeEffect(duration: 300.ms, delay: (50 * index).ms)],
@@ -659,59 +692,25 @@ class _PasswordsPageState extends State<PasswordsPage>
                 _showAddOrEditPasswordDialog(password: password);
                 return false;
               } else if (direction == DismissDirection.endToStart) {
-                // Показываем диалог подтверждения
-                bool? result = await showDialog<bool>(
+                final completer = Completer<bool>();
+                AdaptiveAlertDialog.show(
                   context: context,
-                  builder: (context) {
-                    return AlertDialog(
-                      backgroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      title: Text(
-                        'Подтверждение удаления',
-                        style: GoogleFonts.montserrat(
-                          color: hikRed,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      content: Text(
-                        'Вы уверены, что хотите удалить эту запись?',
-                        style: GoogleFonts.montserrat(
-                          color: darkGray,
-                        ),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(false),
-                          child: Text(
-                            'Отмена',
-                            style: GoogleFonts.montserrat(
-                              color: visionGray,
-                            ),
-                          ),
-                        ),
-                        ElevatedButton(
-                          onPressed: () => Navigator.of(context).pop(true),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: hikRed,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: Text(
-                            'Удалить',
-                            style: GoogleFonts.montserrat(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
+                  title: 'Подтверждение удаления',
+                  message: 'Вы уверены, что хотите удалить эту запись?',
+                  actions: [
+                    AlertAction(
+                      title: 'Отмена',
+                      style: AlertActionStyle.cancel,
+                      onPressed: () => completer.complete(false),
+                    ),
+                    AlertAction(
+                      title: 'Удалить',
+                      style: AlertActionStyle.destructive,
+                      onPressed: () => completer.complete(true),
+                    ),
+                  ],
                 );
-                return result ?? false;
+                return completer.future;
               }
               return false;
             },
@@ -724,7 +723,6 @@ class _PasswordsPageState extends State<PasswordsPage>
             child: Container(
               margin: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
@@ -734,97 +732,166 @@ class _PasswordsPageState extends State<PasswordsPage>
                   ),
                 ],
               ),
-              child: ExpansionTile(
-                tilePadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                childrenPadding:
-                    EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                leading: Container(
-                  padding: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: hikRed.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.business_outlined,
-                    color: hikRed,
-                  ),
-                ),
-                title: Text(
-                  password['organization_name'] ?? 'Без названия',
-                  style: GoogleFonts.montserrat(
-                    color: darkGray,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                subtitle: Text(
-                  'Нажмите, чтобы показать пароли',
-                  style: GoogleFonts.montserrat(
-                    color: visionGray,
-                    fontSize: 10,
-                  ),
-                ),
-                trailing: Row(
+              child: Material(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    IconButton(
-                      icon: Icon(
-                        isVisible ? Icons.visibility : Icons.visibility_off,
-                        color: visionGray,
-                        size: 20,
+                    InkWell(
+                      onTap: () =>
+                          setState(() => _expandedItems[id] = !isExpanded),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: hikRed.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.business_outlined,
+                                color: hikRed,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    password['organization_name'] ??
+                                        'Без названия',
+                                    style: GoogleFonts.montserrat(
+                                      color: darkGray,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: isExpanded
+                                          ? hikRed.withOpacity(0.12)
+                                          : visionGray.withOpacity(0.08),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          isExpanded
+                                              ? Icons.lock_open_rounded
+                                              : Icons.lock_outline_rounded,
+                                          size: 12,
+                                          color:
+                                              isExpanded ? hikRed : visionGray,
+                                        ),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          isExpanded
+                                              ? 'Пароли открыты'
+                                              : 'Нажмите, чтобы показать',
+                                          style: GoogleFonts.montserrat(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: isExpanded
+                                                ? hikRed
+                                                : visionGray,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            IconButton(
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              icon: Icon(
+                                Icons.edit_outlined,
+                                color: visionGray,
+                                size: 18,
+                              ),
+                              onPressed: () => _showAddOrEditPasswordDialog(
+                                  password: password),
+                            ),
+                            const SizedBox(width: 8),
+                            AnimatedRotation(
+                              duration: const Duration(milliseconds: 200),
+                              turns: isExpanded ? 0.5 : 0,
+                              child: Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                                color: visionGray,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      onPressed: () => _togglePasswordVisibility(id),
                     ),
-                    IconButton(
-                      icon: Icon(
-                        Icons.edit_outlined,
-                        color: visionGray,
-                        size: 20,
+                    AnimatedCrossFade(
+                      duration: const Duration(milliseconds: 220),
+                      sizeCurve: Curves.easeInOut,
+                      crossFadeState: isExpanded
+                          ? CrossFadeState.showSecond
+                          : CrossFadeState.showFirst,
+                      firstChild: const SizedBox(width: double.infinity),
+                      secondChild: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                        child: Column(
+                          children: [
+                            _buildPasswordItem(
+                              icon: Icons.lock_outline,
+                              title: 'Пароль NVR:',
+                              password: password['nvr_password'] ?? '',
+                              color: hikRed,
+                              onCopy: () => _copyToClipboard(
+                                  password['nvr_password'] ?? '', 'Пароль NVR'),
+                            ),
+                            SizedBox(height: 10),
+                            _buildPasswordItem(
+                              icon: Icons.videocam_outlined,
+                              title: 'Пароль камеры:',
+                              password: password['camera_password'] ?? '',
+                              color: visionGray,
+                              onCopy: () => _copyToClipboard(
+                                  password['camera_password'] ?? '',
+                                  'Пароль камеры'),
+                            ),
+                            SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                TextButton.icon(
+                                  onPressed: () => deletePassword(id),
+                                  icon: Icon(
+                                    Icons.delete_outline,
+                                    color: hikRed,
+                                  ),
+                                  label: Text(
+                                    'Удалить',
+                                    style: GoogleFonts.montserrat(
+                                      color: hikRed,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                      onPressed: () =>
-                          _showAddOrEditPasswordDialog(password: password),
                     ),
                   ],
                 ),
-                children: [
-                  _buildPasswordItem(
-                    icon: Icons.lock_outline,
-                    title: 'Пароль NVR:',
-                    password: password['nvr_password'] ?? '',
-                    isVisible: isVisible,
-                    color: hikRed,
-                    onCopy: () => _copyToClipboard(
-                        password['nvr_password'] ?? '', 'Пароль NVR'),
-                  ),
-                  SizedBox(height: 10),
-                  _buildPasswordItem(
-                    icon: Icons.videocam_outlined,
-                    title: 'Пароль камеры:',
-                    password: password['camera_password'] ?? '',
-                    isVisible: isVisible,
-                    color: visionGray,
-                    onCopy: () => _copyToClipboard(
-                        password['camera_password'] ?? '', 'Пароль камеры'),
-                  ),
-                  SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton.icon(
-                        onPressed: () => deletePassword(id),
-                        icon: Icon(
-                          Icons.delete_outline,
-                          color: hikRed,
-                        ),
-                        label: Text(
-                          'Удалить',
-                          style: GoogleFonts.montserrat(
-                            color: hikRed,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
               ),
             ),
           ),
@@ -837,44 +904,55 @@ class _PasswordsPageState extends State<PasswordsPage>
     required IconData icon,
     required String title,
     required String password,
-    required bool isVisible,
     required Color color,
     required VoidCallback onCopy,
   }) {
-    return Row(
-      children: [
-        Icon(
-          icon,
-          size: 20,
-          color: color,
-        ),
-        SizedBox(width: 8),
-        Text(
-          title,
-          style: GoogleFonts.montserrat(
-            color: darkGray,
-          ),
-        ),
-        SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            isVisible ? password : '••••••••',
-            style: GoogleFonts.montserrat(
-              color: darkGray,
-              fontWeight: FontWeight.w500,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.montserrat(
+                    color: visionGray,
+                    fontSize: 10,
+                  ),
+                ),
+                Text(
+                  password,
+                  style: GoogleFonts.montserrat(
+                    color: darkGray,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-        IconButton(
-          icon: Icon(
-            Icons.copy,
-            color: visionGray,
-            size: 20,
+          InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: onCopy,
+            child: Padding(
+              padding: const EdgeInsets.all(6),
+              child: Icon(
+                Icons.copy_rounded,
+                color: visionGray,
+                size: 18,
+              ),
+            ),
           ),
-          onPressed: onCopy,
-          tooltip: 'Копировать',
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

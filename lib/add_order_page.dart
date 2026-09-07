@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'order_detail_page.dart';
 
 class AddOrderPage extends StatefulWidget {
@@ -77,7 +78,7 @@ class _AddOrderPageState extends State<AddOrderPage>
         }
 
         final response = await http.post(
-          Uri.parse('https://rhik.pythonanywhere.com/sales/api/orders/'),
+          Uri.parse('http://26.6.96.21:8000/sales/api/orders/'),
           headers: {
             'Content-Type': 'application/json; charset=utf-8',
             'Authorization': 'Bearer $token',
@@ -98,11 +99,13 @@ class _AddOrderPageState extends State<AddOrderPage>
         );
 
         if (response.statusCode == 201) {
-          final jsonResponse = json.decode(response.body);
+          final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
           final int newOrderId = jsonResponse['id'];
 
-          _showSnackBar('Заказ успешно создан', false);
-
+          // Don't show a SnackBar here: SnackBar hard-codes a Hero that
+          // participates in the transition, and navigating the instant it
+          // appears crashes with "multiple heroes share the same tag".
+          // Opening the new order's detail page is confirmation enough.
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -125,6 +128,7 @@ class _AddOrderPageState extends State<AddOrderPage>
   }
 
   void _showSnackBar(String message, bool isError) {
+    ScaffoldMessenger.of(context).removeCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -151,306 +155,304 @@ class _AddOrderPageState extends State<AddOrderPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          // Фоновый градиент как в LoginPage
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.white,
-                  Colors.grey[100]!,
-                  Colors.grey[200]!,
-                ],
-              ),
-            ),
+    return AdaptiveScaffold(
+      appBar: AdaptiveAppBar(
+        title: 'Добавить заказ',
+        useNativeToolbar: true,
+        leading: SizedBox(
+          width: 38,
+          height: 38,
+          child: AdaptiveButton.sfSymbol(
+            onPressed: () => Navigator.of(context).pop(),
+            sfSymbol: const SFSymbol('chevron.left', size: 20),
+            useSmoothRectangleBorder: false,
           ),
-          // Декоративные круги как в LoginPage
-          Positioned(
-            top: -100,
-            right: -100,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: hikRed.withOpacity(0.05),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -80,
-            left: -80,
-            child: Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: visionGray.withOpacity(0.05),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              height: 150,
+        ),
+      ),
+      body: Material(
+        type: MaterialType.transparency,
+        child: Stack(
+          children: [
+            // Фоновый градиент как в LoginPage
+            Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    hikRed.withOpacity(0.9),
-                    hikRed.withOpacity(0.0),
+                    Colors.white,
+                    Colors.grey[100]!,
+                    Colors.grey[200]!,
                   ],
                 ),
               ),
             ),
-          ),
-          SafeArea(
-            child: Column(
-              children: [
-                // AppBar
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0, vertical: 12.0),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.arrow_back, color: darkGray),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                      Text(
-                        'Добавить заказ',
-                        style: GoogleFonts.montserrat(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: darkGray,
-                        ),
-                      ),
+            // Декоративные круги как в LoginPage
+            Positioned(
+              top: -100,
+              right: -100,
+              child: Container(
+                width: 300,
+                height: 300,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: hikRed.withOpacity(0.05),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -80,
+              left: -80,
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: visionGray.withOpacity(0.05),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                height: 150,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      hikRed.withOpacity(0.9),
+                      hikRed.withOpacity(0.0),
                     ],
                   ),
                 ),
-                // Контент
-                Expanded(
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Center(
-                              child: Container(
-                                padding: EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
-                                      blurRadius: 10,
-                                      offset: Offset(0, 5),
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.add_shopping_cart,
-                                      color: hikRed,
-                                      size: 30,
-                                    ),
-                                    SizedBox(width: 12),
-                                    Text(
-                                      'Создание нового заказа',
-                                      style: GoogleFonts.montserrat(
-                                        color: darkGray,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
+              ),
+            ),
+            SafeArea(
+              child: Column(
+                children: [
+                  // Контент
+                  Expanded(
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Center(
+                                child: Container(
+                                  padding: EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.05),
+                                        blurRadius: 10,
+                                        offset: Offset(0, 5),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.add_shopping_cart,
+                                        color: hikRed,
+                                        size: 30,
+                                      ),
+                                      SizedBox(width: 12),
+                                      Text(
+                                        'Создание нового заказа',
+                                        style: GoogleFonts.montserrat(
+                                          color: darkGray,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            )
-                                .animate()
-                                .fadeIn(duration: 400.ms)
-                                .slideY(begin: -0.1, end: 0),
-                            SizedBox(height: 30),
-                            Form(
-                              key: _formKey,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  _buildFormField(
-                                    controller: _clientController,
-                                    label: 'Клиент',
-                                    hint: 'Введите имя клиента',
-                                    icon: Icons.person_outline,
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return 'Введите имя клиента';
-                                      }
-                                      return null;
-                                    },
-                                    delay: 100,
-                                  ),
-                                  SizedBox(height: 20),
-                                  _buildFormField(
-                                    controller: _vatController,
-                                    label: 'НДС (%)',
-                                    hint: 'Введите процент НДС',
-                                    icon: Icons.attach_money,
-                                    keyboardType: TextInputType.number,
-                                    validator: (value) {
-                                      if (value != null && value.isNotEmpty) {
-                                        if (double.tryParse(value) == null) {
-                                          return 'Введите корректное число';
+                              )
+                                  .animate()
+                                  .fadeIn(duration: 400.ms)
+                                  .slideY(begin: -0.1, end: 0),
+                              SizedBox(height: 30),
+                              Form(
+                                key: _formKey,
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    _buildFormField(
+                                      controller: _clientController,
+                                      label: 'Клиент',
+                                      hint: 'Введите имя клиента',
+                                      icon: Icons.person_outline,
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Введите имя клиента';
                                         }
-                                      }
-                                      return null;
-                                    },
-                                    delay: 200,
-                                  ),
-                                  SizedBox(height: 20),
-                                  _buildFormField(
-                                    controller: _additionalExpensesController,
-                                    label: 'Прочие расходы (%)',
-                                    hint:
-                                        'Введите процент дополнительных расходов',
-                                    icon: Icons.account_balance_wallet_outlined,
-                                    keyboardType: TextInputType.number,
-                                    validator: (value) {
-                                      if (value != null && value.isNotEmpty) {
-                                        if (double.tryParse(value) == null) {
-                                          return 'Введите корректное число';
+                                        return null;
+                                      },
+                                      delay: 100,
+                                    ),
+                                    SizedBox(height: 20),
+                                    _buildFormField(
+                                      controller: _vatController,
+                                      label: 'НДС (%)',
+                                      hint: 'Введите процент НДС',
+                                      icon: Icons.attach_money,
+                                      keyboardType: TextInputType.number,
+                                      validator: (value) {
+                                        if (value != null && value.isNotEmpty) {
+                                          if (double.tryParse(value) == null) {
+                                            return 'Введите корректное число';
+                                          }
                                         }
-                                      }
-                                      return null;
-                                    },
-                                    delay: 300,
-                                  ),
-                                  SizedBox(height: 20),
-                                  _buildFormField(
-                                    controller: _advanceController,
-                                    label: 'Аванс',
-                                    hint: 'Введите сумму аванса',
-                                    icon: Icons.payments_outlined,
-                                    keyboardType: TextInputType.number,
-                                    validator: (value) {
-                                      if (value != null && value.isNotEmpty) {
-                                        if (double.tryParse(value) == null) {
-                                          return 'Введите корректное число';
+                                        return null;
+                                      },
+                                      delay: 200,
+                                    ),
+                                    SizedBox(height: 20),
+                                    _buildFormField(
+                                      controller: _additionalExpensesController,
+                                      label: 'Прочие расходы (%)',
+                                      hint:
+                                          'Введите процент дополнительных расходов',
+                                      icon:
+                                          Icons.account_balance_wallet_outlined,
+                                      keyboardType: TextInputType.number,
+                                      validator: (value) {
+                                        if (value != null && value.isNotEmpty) {
+                                          if (double.tryParse(value) == null) {
+                                            return 'Введите корректное число';
+                                          }
                                         }
-                                      }
-                                      return null;
-                                    },
-                                    delay: 400,
-                                  ),
-                                  SizedBox(height: 40),
-                                  Container(
-                                    height: 60,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(16),
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          hikRed,
-                                          hikRed.withOpacity(0.8),
+                                        return null;
+                                      },
+                                      delay: 300,
+                                    ),
+                                    SizedBox(height: 20),
+                                    _buildFormField(
+                                      controller: _advanceController,
+                                      label: 'Аванс',
+                                      hint: 'Введите сумму аванса',
+                                      icon: Icons.payments_outlined,
+                                      keyboardType: TextInputType.number,
+                                      validator: (value) {
+                                        if (value != null && value.isNotEmpty) {
+                                          if (double.tryParse(value) == null) {
+                                            return 'Введите корректное число';
+                                          }
+                                        }
+                                        return null;
+                                      },
+                                      delay: 400,
+                                    ),
+                                    SizedBox(height: 40),
+                                    Container(
+                                      height: 60,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(16),
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            hikRed,
+                                            hikRed.withOpacity(0.8),
+                                          ],
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: hikRed.withOpacity(0.3),
+                                            blurRadius: 15,
+                                            offset: Offset(0, 8),
+                                          ),
                                         ],
                                       ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: hikRed.withOpacity(0.3),
-                                          blurRadius: 15,
-                                          offset: Offset(0, 8),
+                                      child: ElevatedButton.icon(
+                                        onPressed:
+                                            _isCreating ? null : _submitOrder,
+                                        icon: _isCreating
+                                            ? SizedBox(
+                                                width: 20,
+                                                height: 20,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  valueColor:
+                                                      AlwaysStoppedAnimation<
+                                                          Color>(Colors.white),
+                                                ),
+                                              )
+                                            : Icon(Icons.add_circle_outline,
+                                                color: Colors.white),
+                                        label: Text(
+                                          _isCreating
+                                              ? 'Создание...'
+                                              : 'Создать заказ',
+                                          style: GoogleFonts.montserrat(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
                                         ),
-                                      ],
-                                    ),
-                                    child: ElevatedButton.icon(
-                                      onPressed:
-                                          _isCreating ? null : _submitOrder,
-                                      icon: _isCreating
-                                          ? SizedBox(
-                                              width: 20,
-                                              height: 20,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                valueColor:
-                                                    AlwaysStoppedAnimation<
-                                                        Color>(Colors.white),
-                                              ),
-                                            )
-                                          : Icon(Icons.add_circle_outline,
-                                              color: Colors.white),
-                                      label: Text(
-                                        _isCreating
-                                            ? 'Создание...'
-                                            : 'Создать заказ',
-                                        style: GoogleFonts.montserrat(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.transparent,
+                                          shadowColor: Colors.transparent,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(16),
+                                          ),
                                         ),
                                       ),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.transparent,
-                                        shadowColor: Colors.transparent,
+                                    )
+                                        .animate()
+                                        .fadeIn(duration: 400.ms, delay: 500.ms)
+                                        .slideY(begin: 0.1, end: 0),
+                                    SizedBox(height: 20),
+                                    OutlinedButton.icon(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(),
+                                      icon: Icon(Icons.cancel_outlined,
+                                          color: visionGray),
+                                      label: Text(
+                                        'Отменить',
+                                        style: GoogleFonts.montserrat(
+                                          fontSize: 16,
+                                          color: visionGray,
+                                        ),
+                                      ),
+                                      style: OutlinedButton.styleFrom(
+                                        padding:
+                                            EdgeInsets.symmetric(vertical: 15),
+                                        side: BorderSide(
+                                            color: visionGray.withOpacity(0.3)),
                                         shape: RoundedRectangleBorder(
                                           borderRadius:
                                               BorderRadius.circular(16),
                                         ),
                                       ),
-                                    ),
-                                  )
-                                      .animate()
-                                      .fadeIn(duration: 400.ms, delay: 500.ms)
-                                      .slideY(begin: 0.1, end: 0),
-                                  SizedBox(height: 20),
-                                  OutlinedButton.icon(
-                                    onPressed: () =>
-                                        Navigator.of(context).pop(),
-                                    icon: Icon(Icons.cancel_outlined,
-                                        color: visionGray),
-                                    label: Text(
-                                      'Отменить',
-                                      style: GoogleFonts.montserrat(
-                                        fontSize: 16,
-                                        color: visionGray,
-                                      ),
-                                    ),
-                                    style: OutlinedButton.styleFrom(
-                                      padding:
-                                          EdgeInsets.symmetric(vertical: 15),
-                                      side: BorderSide(
-                                          color: visionGray.withOpacity(0.3)),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                    ),
-                                  )
-                                      .animate()
-                                      .fadeIn(duration: 400.ms, delay: 600.ms),
-                                  SizedBox(height: 20),
-                                ],
+                                    ).animate().fadeIn(
+                                        duration: 400.ms, delay: 600.ms),
+                                    SizedBox(height: 20),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

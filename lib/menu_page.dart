@@ -1,10 +1,24 @@
+import 'dart:convert';
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'info_page.dart';
 import 'results_day_page.dart';
 import 'orders_page.dart';
 import 'passwords_page.dart';
+
+/// The native iOS 26+ tab bar only renders SF Symbol name strings; the
+/// Android fallback only renders [IconData] (a string is shown as a plain
+/// circle there). Pick the right type per platform so both render properly.
+dynamic _navIcon({required String sfSymbol, required IconData material}) {
+  return Platform.isIOS ? sfSymbol : material;
+}
 
 class MenuPage extends StatefulWidget {
   final Map<String, dynamic> userData;
@@ -17,30 +31,114 @@ class MenuPage extends StatefulWidget {
   _MenuPageState createState() => _MenuPageState();
 }
 
-class _MenuPageState extends State<MenuPage>
+class _MenuPageState extends State<MenuPage> {
+  int _selectedIndex = 0;
+
+  late final List<Widget> _tabs = [
+    _HomeTab(
+      userData: widget.userData,
+      onNavigate: (index) => setState(() => _selectedIndex = index),
+    ),
+    OrdersPage(),
+    ResultsDayPage(),
+    PasswordsPage(),
+    SettingsPage(userData: widget.userData, token: widget.token),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return AdaptiveScaffold(
+      bottomNavigationBar: AdaptiveBottomNavigationBar(
+        useNativeBottomBar: true,
+        selectedIndex: _selectedIndex,
+        onTap: (index) => setState(() => _selectedIndex = index),
+        items: [
+          AdaptiveNavigationDestination(
+            icon: _navIcon(sfSymbol: 'house', material: Icons.home_outlined),
+            selectedIcon:
+                _navIcon(sfSymbol: 'house.fill', material: Icons.home),
+            label: 'Главная',
+          ),
+          AdaptiveNavigationDestination(
+            icon: _navIcon(
+                sfSymbol: 'bag', material: Icons.shopping_bag_outlined),
+            selectedIcon:
+                _navIcon(sfSymbol: 'bag.fill', material: Icons.shopping_bag),
+            label: 'Заказы',
+          ),
+          AdaptiveNavigationDestination(
+            icon: _navIcon(
+                sfSymbol: 'chart.bar.fill', material: Icons.bar_chart_rounded),
+            label: 'Итоги дня',
+          ),
+          AdaptiveNavigationDestination(
+            icon: _navIcon(
+                sfSymbol: 'key.fill', material: Icons.vpn_key_outlined),
+            label: 'Пароли',
+          ),
+          AdaptiveNavigationDestination(
+            icon: _navIcon(sfSymbol: 'gear', material: Icons.settings_outlined),
+            label: 'Настройки',
+          ),
+        ],
+      ),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _tabs,
+      ),
+    );
+  }
+}
+
+class _HomeTab extends StatefulWidget {
+  final Map<String, dynamic> userData;
+  final ValueChanged<int> onNavigate;
+
+  const _HomeTab({required this.userData, required this.onNavigate});
+
+  @override
+  State<_HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends State<_HomeTab>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
-  late Animation<double> _scaleAnimation;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
+  // Фирменная палитра HIKVISION
   final Color hikRed = Color(0xFFE31E24);
+  final Color hikRedDark = Color(0xFFAE1015);
+  final Color graphite = Color(0xFF1C1C1E);
   final Color visionGray = Color(0xFF707070);
   final Color darkGray = Color(0xFF333333);
-  final Color lightGray = Color(0xFFF5F5F5);
+
+  bool _isLoadingStats = true;
+  int _ordersCount = 0;
+  int _confirmedOrdersCount = 0;
+  double _confirmedTotal = 0.0;
+  int _passwordsCount = 0;
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 500),
     );
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeOutBack,
-      ),
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
     );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.06),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    ));
     _animationController.forward();
+    _loadDashboardStats();
   }
 
   @override
@@ -49,291 +147,173 @@ class _MenuPageState extends State<MenuPage>
     super.dispose();
   }
 
+  Future<void> _loadDashboardStats() async {
+    setState(() => _isLoadingStats = true);
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('access_token');
+    if (token == null) {
+      if (mounted) setState(() => _isLoadingStats = false);
+      return;
+    }
+
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+
+    try {
+      final responses = await Future.wait([
+        http.get(Uri.parse('http://26.6.96.21:8000/sales/api/orders/'),
+            headers: headers),
+        http.get(
+            Uri.parse('http://26.6.96.21:8000/sales/api/confirmed-orders/'),
+            headers: headers),
+        http.get(Uri.parse('http://26.6.96.21:8000/sales/api/passwords/'),
+            headers: headers),
+      ]);
+
+      if (responses[0].statusCode == 200) {
+        _ordersCount =
+            (json.decode(utf8.decode(responses[0].bodyBytes)) as List).length;
+      }
+      if (responses[1].statusCode == 200) {
+        final data = json.decode(utf8.decode(responses[1].bodyBytes));
+        _confirmedOrdersCount = (data['orders'] as List).length;
+        _confirmedTotal = (data['total_sum'] as num).toDouble();
+      }
+      if (responses[2].statusCode == 200) {
+        _passwordsCount =
+            (json.decode(utf8.decode(responses[2].bodyBytes)) as List).length;
+      }
+    } catch (_) {
+      // Показываем нули, если не удалось получить статистику
+    } finally {
+      if (mounted) setState(() => _isLoadingStats = false);
+    }
+  }
+
   void _logout(BuildContext context) {
-    showDialog(
+    AdaptiveAlertDialog.show(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Text(
-            'Выход',
-            style: GoogleFonts.montserrat(
-              color: hikRed,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: Text(
-            'Вы уверены, что хотите выйти?',
-            style: GoogleFonts.montserrat(
-              color: darkGray,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text(
-                'Отмена',
-                style: GoogleFonts.montserrat(
-                  color: visionGray,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.pushReplacementNamed(context, '/login');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: hikRed,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: Text(
-                'Выйти',
-                style: GoogleFonts.montserrat(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+      title: 'Выход',
+      message: 'Вы уверены, что хотите выйти?',
+      icon: _navIcon(
+          sfSymbol: 'rectangle.portrait.and.arrow.right',
+          material: Icons.logout),
+      iconColor: hikRed,
+      actions: [
+        AlertAction(
+          title: 'Отмена',
+          style: AlertActionStyle.cancel,
+          onPressed: () {},
+        ),
+        AlertAction(
+          title: 'Выйти',
+          style: AlertActionStyle.destructive,
+          onPressed: () {
+            Navigator.pushReplacementNamed(context, '/login');
+          },
+        ),
+      ],
     );
   }
 
-  void _openSettings(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (context) =>
-              SettingsPage(userData: widget.userData, token: widget.token)),
-    );
+  String get _displayName {
+    final firstName = (widget.userData['first_name'] as String?)?.trim();
+    final lastName = (widget.userData['last_name'] as String?)?.trim();
+    final fullName = [firstName, lastName]
+        .where((part) => part != null && part.isNotEmpty)
+        .join(' ');
+    if (fullName.isNotEmpty) return fullName;
+    return (widget.userData['username'] as String?)?.trim() ?? 'Пользователь';
   }
 
-  void _openPartyStatusPage(BuildContext context) {
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => OrdersPage(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          var begin = Offset(1.0, 0.0);
-          var end = Offset.zero;
-          var curve = Curves.easeInOutCubic;
-          var tween =
-              Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-          return SlideTransition(
-              position: animation.drive(tween), child: child);
-        },
-      ),
-    );
-  }
-
-  void _openMonitoringPage(BuildContext context) {
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            ResultsDayPage(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          var begin = Offset(1.0, 0.0);
-          var end = Offset.zero;
-          var curve = Curves.easeInOutCubic;
-          var tween =
-              Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-          return SlideTransition(
-              position: animation.drive(tween), child: child);
-        },
-      ),
-    );
-  }
-
-  void _openPasswordsPage(BuildContext context) {
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            PasswordsPage(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-      ),
-    );
+  String get _userInitial {
+    final name = _displayName;
+    if (name.isEmpty) return '?';
+    return name[0].toUpperCase();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: hikRed,
-        title: Row(
-          children: [
-            RichText(
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: 'HIK',
-                    style: GoogleFonts.montserrat(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 22,
-                    ),
-                  ),
-                  TextSpan(
-                    text: 'VISION',
-                    style: GoogleFonts.montserrat(
-                      color: Colors.white.withOpacity(0.9),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 22,
-                    ),
-                  ),
-                ],
-              ),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark,
+      child: AdaptiveScaffold(
+        useHeroBackButton: false,
+        appBar: AdaptiveAppBar(
+          useNativeToolbar: true,
+          actions: [
+            AdaptiveAppBarAction(
+              iosSymbol: 'rectangle.portrait.and.arrow.right',
+              icon: Icons.logout,
+              onPressed: () => _logout(context),
             ),
           ],
         ),
-        actions: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.settings, color: Colors.white),
-            onPressed: () => _openSettings(context),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: () => _logout(context),
-          ),
-        ],
-      ),
-      body: Container(
-        color: Colors.grey[100],
-        child: Column(
+        body: Stack(
           children: [
-            // Приветственный блок
+            // Фирменный фон-подложка
             Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 20),
               decoration: BoxDecoration(
-                color: hikRed,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(20),
-                  bottomRight: Radius.circular(20),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.white, Colors.grey[100]!, Colors.grey[200]!],
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: hikRed.withOpacity(0.2),
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Добро пожаловать,',
-                    style: GoogleFonts.montserrat(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 16,
-                    ),
-                  ),
-                  SizedBox(height: 5),
-                  AnimatedTextKit(
-                    animatedTexts: [
-                      TypewriterAnimatedText(
-                        widget.userData['username'] ?? 'Пользователь',
-                        textStyle: GoogleFonts.montserrat(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        speed: Duration(milliseconds: 100),
-                      ),
-                    ],
-                    totalRepeatCount: 1,
-                  ),
-                ],
               ),
             ),
-
-            // Основное содержимое
-            Expanded(
-              child: ScaleTransition(
-                scale: _scaleAnimation,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Padding(
-                        padding: const EdgeInsets.only(
-                            left: 8.0, top: 16.0, bottom: 16.0),
-                        child: Text(
-                          'Меню',
-                          style: GoogleFonts.montserrat(
-                            color: visionGray,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
+            Positioned(
+              top: -100,
+              right: -100,
+              child: _decorCircle(300, hikRed.withOpacity(0.05)),
+            ),
+            Positioned(
+              bottom: -60,
+              left: -80,
+              child: _decorCircle(200, visionGray.withOpacity(0.05)),
+            ),
+            SafeArea(
+              minimum: EdgeInsets.only(
+                bottom: PlatformInfo.isIOS26OrHigher() ? 90.0 : 0.0,
+              ),
+              child: RefreshIndicator(
+                color: hikRed,
+                onRefresh: _loadDashboardStats,
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(
+                        parent: BouncingScrollPhysics(),
+                      ),
+                      slivers: [
+                        SliverToBoxAdapter(child: _buildHeroHeader()),
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(20, 28, 20, 12),
+                          sliver: SliverList(
+                            delegate: SliverChildListDelegate([
+                              _sectionLabel('ОБЗОР'),
+                              const SizedBox(height: 14),
+                              _buildOverviewGrid(),
+                              const SizedBox(height: 36),
+                              Center(
+                                child: Text(
+                                  'XVAN RUSLAN PRODUCTION',
+                                  style: GoogleFonts.montserrat(
+                                    color: visionGray.withOpacity(0.45),
+                                    fontSize: 11,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                            ]),
                           ),
                         ),
-                      ),
-                      Expanded(
-                        child: GridView.count(
-                          crossAxisCount: 2,
-                          childAspectRatio: 0.85,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                          padding: EdgeInsets.all(8),
-                          children: [
-                            _buildMenuCard(
-                              context,
-                              title: 'Заказы',
-                              icon: Icons.shopping_bag_outlined,
-                              color: hikRed,
-                              onTap: () => _openPartyStatusPage(context),
-                            ),
-                            _buildMenuCard(
-                              context,
-                              title: 'Итоги дня',
-                              icon: Icons.bar_chart_rounded,
-                              color: visionGray,
-                              onTap: () => _openMonitoringPage(context),
-                            ),
-                            _buildMenuCard(
-                              context,
-                              title: 'Пароли',
-                              icon: Icons.vpn_key_outlined,
-                              color: hikRed,
-                              onTap: () => _openPasswordsPage(context),
-                            ),
-                            _buildMenuCard(
-                              context,
-                              title: 'Настройки',
-                              icon: Icons.settings_outlined,
-                              color: visionGray,
-                              onTap: () => _openSettings(context),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Center(
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 20.0),
-                          child: Text(
-                            'XVAN RUSLAN PRODUCTION',
-                            style: GoogleFonts.montserrat(
-                              color: visionGray.withOpacity(0.5),
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -344,62 +324,241 @@ class _MenuPageState extends State<MenuPage>
     );
   }
 
-  Widget _buildMenuCard(
-    BuildContext context, {
-    required String title,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
+  Widget _decorCircle(double size, Color color) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+    );
+  }
+
+  Widget _sectionLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4.0),
+      child: Text(
+        text,
+        style: GoogleFonts.montserrat(
+          color: visionGray,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.4,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeroHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
       child: Container(
+        padding: const EdgeInsets.all(22),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [hikRed, hikRedDark],
+          ),
+          borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: Offset(0, 5),
+              color: hikRed.withOpacity(0.35),
+              blurRadius: 24,
+              offset: const Offset(0, 14),
             ),
           ],
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: EdgeInsets.all(15),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                shape: BoxShape.circle,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned(
+                top: -36,
+                right: -28,
+                child: _decorCircle(120, Colors.white.withOpacity(0.08)),
               ),
-              child: Icon(
-                icon,
-                size: 40,
-                color: color,
+              Positioned(
+                bottom: -44,
+                right: 56,
+                child: _decorCircle(80, Colors.white.withOpacity(0.06)),
               ),
-            ),
-            SizedBox(height: 15),
-            Text(
-              title,
-              style: GoogleFonts.montserrat(
-                color: darkGray,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 54,
+                    height: 54,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.15),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      _userInitial,
+                      style: GoogleFonts.montserrat(
+                        color: hikRed,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Добро пожаловать',
+                          style: GoogleFonts.montserrat(
+                            color: Colors.white.withOpacity(0.8),
+                            fontSize: 13,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        AnimatedTextKit(
+                          animatedTexts: [
+                            TypewriterAnimatedText(
+                              _displayName,
+                              textStyle: GoogleFonts.montserrat(
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              speed: const Duration(milliseconds: 90),
+                            ),
+                          ],
+                          totalRepeatCount: 1,
+                          isRepeatingAnimation: false,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ),
-            SizedBox(height: 8),
-            Container(
-              width: 50,
-              height: 3,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildOverviewGrid() {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      childAspectRatio: 1.5,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      children: [
+        _buildStatCard(
+          title: 'Заказы',
+          value: '$_ordersCount',
+          material: Icons.shopping_bag_outlined,
+          accent: hikRed,
+        ),
+        _buildStatCard(
+          title: 'Подтверждено',
+          value: '$_confirmedOrdersCount',
+          material: Icons.check_circle_outline,
+          accent: graphite,
+        ),
+        _buildStatCard(
+          title: 'Сумма за день',
+          value: _confirmedTotal.toStringAsFixed(2),
+          material: Icons.bar_chart_rounded,
+          accent: hikRed,
+        ),
+        _buildStatCard(
+          title: 'Пароли',
+          value: '$_passwordsCount',
+          material: Icons.vpn_key_outlined,
+          accent: graphite,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatCard({
+    required String title,
+    required String value,
+    required IconData material,
+    required Color accent,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: accent.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: Icon(material, size: 20, color: accent),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _isLoadingStats
+                    ? Shimmer.fromColors(
+                        baseColor: Colors.grey[300]!,
+                        highlightColor: Colors.grey[100]!,
+                        child: Container(
+                          width: 40,
+                          height: 16,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                      )
+                    : Text(
+                        value,
+                        style: GoogleFonts.montserrat(
+                          color: darkGray,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                const SizedBox(height: 2),
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.montserrat(
+                    color: visionGray,
+                    fontSize: 11.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

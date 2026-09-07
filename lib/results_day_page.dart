@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 
 class ResultsDayPage extends StatefulWidget {
   @override
@@ -18,6 +20,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
   double totalSum = 0.0;
   DateTime? _startDate;
   DateTime? _endDate;
+  String _selectedPreset = 'all';
   bool _isLoading = true;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -53,37 +56,184 @@ class _ResultsDayPageState extends State<ResultsDayPage>
   }
 
   Future<void> _selectDateRange(BuildContext context) async {
-    final DateTimeRange? picked = await showDateRangePicker(
+    DateTime tempStart = _startDate ?? DateTime.now();
+    DateTime tempEnd = _endDate ?? DateTime.now();
+
+    await showModalBottomSheet(
       context: context,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
-      initialDateRange: _startDate != null && _endDate != null
-          ? DateTimeRange(start: _startDate!, end: _endDate!)
-          : null,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: hikRed,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: darkGray,
-            ),
-            dialogBackgroundColor: Colors.white,
-          ),
-          child: child!,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            return Container(
+              padding: EdgeInsets.fromLTRB(
+                  20, 20, 20, 20 + MediaQuery.of(sheetContext).padding.bottom),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  topRight: Radius.circular(24),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 5,
+                      margin: EdgeInsets.only(bottom: 20),
+                      decoration: BoxDecoration(
+                        color: visionGray.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    'Выберите период',
+                    style: GoogleFonts.montserrat(
+                      color: darkGray,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  _buildDatePickerRow(
+                    context: sheetContext,
+                    label: 'С',
+                    value: tempStart,
+                    onChanged: (d) => setSheetState(() => tempStart = d),
+                  ),
+                  SizedBox(height: 12),
+                  _buildDatePickerRow(
+                    context: sheetContext,
+                    label: 'По',
+                    value: tempEnd,
+                    onChanged: (d) => setSheetState(() => tempEnd = d),
+                  ),
+                  SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(sheetContext);
+                        setState(() {
+                          _startDate = tempStart;
+                          _endDate = tempEnd;
+                          _selectedPreset = 'custom';
+                          _isLoading = true;
+                        });
+                        fetchConfirmedOrders();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: hikRed,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: Text(
+                        'Применить',
+                        style: GoogleFonts.montserrat(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
     );
+  }
 
-    if (picked != null && picked.start != null && picked.end != null) {
-      setState(() {
-        _startDate = picked.start;
-        _endDate = picked.end;
-        _isLoading = true;
-      });
-      fetchConfirmedOrders();
+  Widget _buildDatePickerRow({
+    required BuildContext context,
+    required String label,
+    required DateTime value,
+    required ValueChanged<DateTime> onChanged,
+  }) {
+    return GestureDetector(
+      onTap: () async {
+        final picked = await AdaptiveDatePicker.show(
+          context: context,
+          initialDate: value,
+          firstDate: DateTime(2020),
+          lastDate: DateTime.now(),
+        );
+        if (picked != null) onChanged(picked);
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: lightGray,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: GoogleFonts.montserrat(
+                color: visionGray,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            Row(
+              children: [
+                Text(
+                  DateFormat('dd.MM.yyyy').format(value),
+                  style: GoogleFonts.montserrat(
+                    color: darkGray,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(width: 8),
+                Icon(Icons.calendar_today, size: 16, color: visionGray),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _applyPreset(String preset) {
+    final now = DateTime.now();
+    DateTime? start;
+    DateTime? end;
+
+    switch (preset) {
+      case 'today':
+        start = DateTime(now.year, now.month, now.day);
+        end = now;
+        break;
+      case 'week':
+        start = now.subtract(Duration(days: now.weekday - 1));
+        start = DateTime(start.year, start.month, start.day);
+        end = now;
+        break;
+      case 'month':
+        start = DateTime(now.year, now.month, 1);
+        end = now;
+        break;
+      case 'all':
+        start = null;
+        end = null;
+        break;
     }
+
+    setState(() {
+      _selectedPreset = preset;
+      _startDate = start;
+      _endDate = end;
+      _isLoading = true;
+    });
+    fetchConfirmedOrders();
   }
 
   Future<void> fetchConfirmedOrders() async {
@@ -106,7 +256,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
         if (endDate != null) 'end_date': endDate,
       };
       final uri = Uri.http(
-        'rhik.pythonanywhere.com',
+        '26.6.96.21:8000',
         '/sales/api/confirmed-orders/',
         queryParameters,
       );
@@ -121,7 +271,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
         );
 
         if (response.statusCode == 200) {
-          final data = json.decode(response.body);
+          final data = json.decode(utf8.decode(response.bodyBytes));
           setState(() {
             orders = data['orders'];
             totalSum = data['total_sum'];
@@ -147,7 +297,17 @@ class _ResultsDayPageState extends State<ResultsDayPage>
     }
   }
 
+  /// The server always sends timestamps with a Tashkent (+05:00) offset.
+  /// `DateTime.parse` converts that instant to the device's own timezone,
+  /// which shifts the displayed time when the device isn't set to +05:00.
+  /// Re-apply the Tashkent offset so the displayed time always matches what
+  /// the server meant, regardless of the device's local timezone.
+  DateTime _parseServerDate(String value) {
+    return DateTime.parse(value).toUtc().add(const Duration(hours: 5));
+  }
+
   void _showError(String message) {
+    ScaffoldMessenger.of(context).removeCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -175,179 +335,218 @@ class _ResultsDayPageState extends State<ResultsDayPage>
       dateRangeText = '$startFormatted - $endFormatted';
     }
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          // Фоновый градиент как в LoginPage
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.white,
-                  Colors.grey[100]!,
-                  Colors.grey[200]!,
-                ],
-              ),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark,
+      child: AdaptiveScaffold(
+        useHeroBackButton: false,
+        appBar: AdaptiveAppBar(
+          title: 'Итоги дня',
+          useNativeToolbar: true,
+          actions: [
+            AdaptiveAppBarAction(
+              iosSymbol: 'calendar',
+              icon: Icons.calendar_today,
+              onPressed: () => _selectDateRange(context),
             ),
-          ),
-          // Декоративные круги как в LoginPage
-          Positioned(
-            top: -100,
-            right: -100,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: hikRed.withOpacity(0.05),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -80,
-            left: -80,
-            child: Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: visionGray.withOpacity(0.05),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              height: 150,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    hikRed.withOpacity(0.9),
-                    hikRed.withOpacity(0.0),
-                  ],
+          ],
+        ),
+        body: Material(
+          type: MaterialType.transparency,
+          child: Stack(
+            children: [
+              // Фоновый градиент как в LoginPage
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white,
+                      Colors.grey[100]!,
+                      Colors.grey[200]!,
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ),
-          SafeArea(
-            child: Column(
-              children: [
-                // AppBar
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0, vertical: 12.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: Icon(Icons.arrow_back, color: darkGray),
-                            onPressed: () => Navigator.of(context).pop(),
+              // Декоративные круги как в LoginPage
+              Positioned(
+                top: -100,
+                right: -100,
+                child: Container(
+                  width: 300,
+                  height: 300,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: hikRed.withOpacity(0.05),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: -80,
+                left: -80,
+                child: Container(
+                  width: 200,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: visionGray.withOpacity(0.05),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  height: 150,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        hikRed.withOpacity(0.9),
+                        hikRed.withOpacity(0.0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              SafeArea(
+                minimum: EdgeInsets.only(
+                  bottom: PlatformInfo.isIOS26OrHigher() ? 90.0 : 0.0,
+                ),
+                child: Column(
+                  children: [
+                    SizedBox(height: 12),
+                    // Быстрые пресеты периода
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _buildPresetChip('all', 'Всё время'),
+                            SizedBox(width: 8),
+                            _buildPresetChip('today', 'Сегодня'),
+                            SizedBox(width: 8),
+                            _buildPresetChip('week', 'Неделя'),
+                            SizedBox(width: 8),
+                            _buildPresetChip('month', 'Месяц'),
+                            SizedBox(width: 8),
+                            _buildPresetChip('custom', 'Свой период',
+                                onTapOverride: () => _selectDateRange(context)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Период дат
+                    Container(
+                      margin:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: Offset(0, 5),
                           ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.date_range,
+                            color: visionGray,
+                            size: 18,
+                          ),
+                          SizedBox(width: 8),
                           Text(
-                            'Итоги дня',
+                            dateRangeText,
                             style: GoogleFonts.montserrat(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
                               color: darkGray,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ],
                       ),
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: Icon(Icons.calendar_today, color: darkGray),
-                            onPressed: () => _selectDateRange(context),
-                            tooltip: 'Выбрать период',
-                          ),
-                          IconButton(
-                            icon: Icon(Icons.refresh, color: darkGray),
-                            onPressed: _refreshOrders,
-                            tooltip: 'Обновить',
+                    ),
+                    // Переключатель вкладок
+                    Container(
+                      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: Offset(0, 5),
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
-                // Период дат
-                Container(
-                  margin: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: Offset(0, 5),
+                      child: Row(
+                        children: [
+                          _buildTabButton(0, 'Список'),
+                          _buildTabButton(1, 'Статистика'),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.date_range,
-                        color: visionGray,
-                        size: 18,
+                    ),
+                    // Контент
+                    Expanded(
+                      child: FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: _selectedTabIndex == 0
+                            ? _buildOrdersList()
+                            : _buildStatisticsView(),
                       ),
-                      SizedBox(width: 8),
-                      Text(
-                        dateRangeText,
-                        style: GoogleFonts.montserrat(
-                          color: darkGray,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                    // Итоговая сумма
+                    _buildTotalSumBar(),
+                  ],
                 ),
-                // Переключатель вкладок
-                Container(
-                  margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      _buildTabButton(0, 'Список'),
-                      _buildTabButton(1, 'Статистика'),
-                    ],
-                  ),
-                ),
-                // Контент
-                Expanded(
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: _selectedTabIndex == 0
-                        ? _buildOrdersList()
-                        : _buildStatisticsView(),
-                  ),
-                ),
-                // Итоговая сумма
-                _buildTotalSumBar(),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPresetChip(String preset, String label,
+      {VoidCallback? onTapOverride}) {
+    final bool isSelected = _selectedPreset == preset;
+
+    return GestureDetector(
+      onTap: onTapOverride ?? () => _applyPreset(preset),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? hikRed : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? hikRed : visionGray.withOpacity(0.2),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 6,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.montserrat(
+            color: isSelected ? Colors.white : visionGray,
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
       ),
     );
   }
@@ -401,14 +600,13 @@ class _ResultsDayPageState extends State<ResultsDayPage>
         physics: AlwaysScrollableScrollPhysics(),
         itemBuilder: (context, index) {
           final order = orders[index];
-          DateTime orderDate = DateTime.parse(order['created_at']);
+          DateTime orderDate = _parseServerDate(order['created_at']);
           String formattedDate =
               DateFormat('dd.MM.yyyy HH:mm').format(orderDate);
 
           return Container(
             margin: EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
@@ -418,81 +616,86 @@ class _ResultsDayPageState extends State<ResultsDayPage>
                 ),
               ],
             ),
-            child: ListTile(
-              contentPadding:
-                  EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              leading: Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: hikRed.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Icon(
-                    Icons.shopping_bag_outlined,
-                    color: hikRed,
-                    size: 24,
+            child: Material(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              clipBehavior: Clip.antiAlias,
+              child: ListTile(
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                leading: Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: hikRed.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.shopping_bag_outlined,
+                      color: hikRed,
+                      size: 24,
+                    ),
                   ),
                 ),
-              ),
-              title: Text(
-                'Клиент: ${order['client']}',
-                style: GoogleFonts.montserrat(
-                  color: darkGray,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
+                title: Text(
+                  'Клиент: ${order['client']}',
+                  style: GoogleFonts.montserrat(
+                    color: darkGray,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
                 ),
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.attach_money,
-                        color: Colors.green,
-                        size: 16,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        'Стоимость: ${order['total_price_with_vat']}',
-                        style: GoogleFonts.montserrat(
-                          color: visionGray,
-                          fontSize: 14,
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.attach_money,
+                          color: Colors.green,
+                          size: 16,
                         ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today,
-                        color: visionGray,
-                        size: 16,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        formattedDate,
-                        style: GoogleFonts.montserrat(
-                          color: visionGray,
-                          fontSize: 12,
+                        SizedBox(width: 4),
+                        Text(
+                          'Стоимость: ${order['total_price_with_vat']}',
+                          style: GoogleFonts.montserrat(
+                            color: visionGray,
+                            fontSize: 14,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                    SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          color: visionGray,
+                          size: 16,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          formattedDate,
+                          style: GoogleFonts.montserrat(
+                            color: visionGray,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                trailing: Icon(
+                  Icons.arrow_forward_ios,
+                  color: visionGray,
+                  size: 16,
+                ),
+                onTap: () {
+                  _showOrderDetails(order);
+                },
               ),
-              trailing: Icon(
-                Icons.arrow_forward_ios,
-                color: visionGray,
-                size: 16,
-              ),
-              onTap: () {
-                _showOrderDetails(order);
-              },
             ),
           );
         },
@@ -511,7 +714,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
 
     Map<String, double> dailyTotals = {};
     for (var order in orders) {
-      DateTime orderDate = DateTime.parse(order['created_at']);
+      DateTime orderDate = _parseServerDate(order['created_at']);
       String dayKey = DateFormat('dd.MM').format(orderDate);
       double price = double.parse(order['total_price_with_vat'].toString());
 
@@ -810,45 +1013,6 @@ class _ResultsDayPageState extends State<ResultsDayPage>
             ),
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: 24),
-          Container(
-            width: 220,
-            height: 50,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(
-                colors: [
-                  hikRed,
-                  hikRed.withOpacity(0.8),
-                ],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: hikRed.withOpacity(0.3),
-                  blurRadius: 15,
-                  offset: Offset(0, 8),
-                ),
-              ],
-            ),
-            child: ElevatedButton.icon(
-              onPressed: () => _selectDateRange(context),
-              icon: Icon(Icons.calendar_today, color: Colors.white),
-              label: Text(
-                'Выбрать другой период',
-                style: GoogleFonts.montserrat(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -990,7 +1154,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
                         icon: Icons.calendar_today,
                         title: 'Дата заказа',
                         value: DateFormat('dd.MM.yyyy HH:mm').format(
-                          DateTime.parse(order['created_at']),
+                          _parseServerDate(order['created_at']),
                         ),
                         iconColor: Colors.amber,
                       ),

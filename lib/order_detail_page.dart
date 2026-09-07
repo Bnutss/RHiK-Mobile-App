@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 
 class OrderDetailPage extends StatefulWidget {
   final int orderId;
@@ -72,7 +73,7 @@ class _OrderDetailPageState extends State<OrderDetailPage>
 
     try {
       final response = await http.get(
-        Uri.parse('https://rhik.pythonanywhere.com/sales/api/orders/$orderId/'),
+        Uri.parse('http://26.6.96.21:8000/sales/api/orders/$orderId/'),
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
           'Authorization': 'Bearer $token',
@@ -119,7 +120,7 @@ class _OrderDetailPageState extends State<OrderDetailPage>
       final request = http.MultipartRequest(
         'POST',
         Uri.parse(
-            'https://rhik.pythonanywhere.com/sales/api/orders/${widget.orderId}/products/'),
+            'http://26.6.96.21:8000/sales/api/orders/${widget.orderId}/products/'),
       )
         ..headers['Authorization'] = 'Bearer $token'
         ..fields['name'] = name
@@ -176,149 +177,153 @@ class _OrderDetailPageState extends State<OrderDetailPage>
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: _nameController,
-                      style: TextStyle(color: darkGray),
-                      decoration: InputDecoration(
-                        labelText: 'Название товара',
-                        labelStyle: TextStyle(color: visionGray),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide:
-                              BorderSide(color: visionGray.withOpacity(0.3)),
+              content: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.9,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: _nameController,
+                        style: TextStyle(color: darkGray),
+                        decoration: InputDecoration(
+                          labelText: 'Название товара',
+                          labelStyle: TextStyle(color: visionGray),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide:
+                                BorderSide(color: visionGray.withOpacity(0.3)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: hikRed),
+                          ),
+                          prefixIcon: Icon(Icons.shopping_bag_outlined,
+                              color: visionGray),
                         ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: hikRed),
-                        ),
-                        prefixIcon: Icon(Icons.shopping_bag_outlined,
-                            color: visionGray),
                       ),
-                    ),
-                    SizedBox(height: 16),
-                    TextField(
-                      controller: _quantityController,
-                      style: TextStyle(color: darkGray),
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: 'Количество',
-                        labelStyle: TextStyle(color: visionGray),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide:
-                              BorderSide(color: visionGray.withOpacity(0.3)),
+                      SizedBox(height: 16),
+                      TextField(
+                        controller: _quantityController,
+                        style: TextStyle(color: darkGray),
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Количество',
+                          labelStyle: TextStyle(color: visionGray),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide:
+                                BorderSide(color: visionGray.withOpacity(0.3)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: hikRed),
+                          ),
+                          prefixIcon: Icon(Icons.format_list_numbered,
+                              color: visionGray),
                         ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: hikRed),
-                        ),
-                        prefixIcon:
-                            Icon(Icons.format_list_numbered, color: visionGray),
                       ),
-                    ),
-                    SizedBox(height: 16),
-                    TextField(
-                      controller: _priceController,
-                      style: TextStyle(color: darkGray),
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: 'Цена за единицу',
-                        labelStyle: TextStyle(color: visionGray),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide:
-                              BorderSide(color: visionGray.withOpacity(0.3)),
+                      SizedBox(height: 16),
+                      TextField(
+                        controller: _priceController,
+                        style: TextStyle(color: darkGray),
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Цена за единицу',
+                          labelStyle: TextStyle(color: visionGray),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide:
+                                BorderSide(color: visionGray.withOpacity(0.3)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: hikRed),
+                          ),
+                          prefixIcon:
+                              Icon(Icons.attach_money, color: visionGray),
                         ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: hikRed),
+                      ),
+                      SizedBox(height: 24),
+                      Text(
+                        'Фото товара',
+                        style: GoogleFonts.montserrat(
+                          color: visionGray,
+                          fontWeight: FontWeight.bold,
                         ),
-                        prefixIcon: Icon(Icons.attach_money, color: visionGray),
                       ),
-                    ),
-                    SizedBox(height: 24),
-                    Text(
-                      'Фото товара',
-                      style: GoogleFonts.montserrat(
-                        color: visionGray,
-                        fontWeight: FontWeight.bold,
+                      SizedBox(height: 12),
+                      GestureDetector(
+                        onTap: () async {
+                          final pickedFile = await _picker.pickImage(
+                              source: ImageSource.camera);
+                          if (pickedFile != null) {
+                            setState(() {
+                              dialogImage = File(pickedFile.path);
+                            });
+                          }
+                        },
+                        child: Container(
+                          height: 120,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: lightGray,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: visionGray.withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: dialogImage == null
+                              ? Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.camera_alt_outlined,
+                                      color: visionGray,
+                                      size: 40,
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'Сделать фото',
+                                      style: GoogleFonts.montserrat(
+                                        color: visionGray,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.file(
+                                    dialogImage!,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 12),
-                    GestureDetector(
-                      onTap: () async {
-                        final pickedFile =
-                            await _picker.pickImage(source: ImageSource.camera);
-                        if (pickedFile != null) {
-                          setState(() {
-                            dialogImage = File(pickedFile.path);
-                          });
-                        }
-                      },
-                      child: Container(
-                        height: 120,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: lightGray,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: visionGray.withOpacity(0.3),
-                            width: 1,
+                      SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        icon: Icon(Icons.photo_library_outlined),
+                        label: Text('Выбрать из галереи'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: visionGray,
+                          side: BorderSide(color: visionGray.withOpacity(0.3)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                        child: dialogImage == null
-                            ? Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.camera_alt_outlined,
-                                    color: visionGray,
-                                    size: 40,
-                                  ),
-                                  SizedBox(height: 8),
-                                  Text(
-                                    'Сделать фото',
-                                    style: GoogleFonts.montserrat(
-                                      color: visionGray,
-                                    ),
-                                  ),
-                                ],
-                              )
-                            : ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Image.file(
-                                  dialogImage!,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
+                        onPressed: () async {
+                          final pickedFile = await _picker.pickImage(
+                              source: ImageSource.gallery);
+                          if (pickedFile != null) {
+                            setState(() {
+                              dialogImage = File(pickedFile.path);
+                            });
+                          }
+                        },
                       ),
-                    ),
-                    SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      icon: Icon(Icons.photo_library_outlined),
-                      label: Text('Выбрать из галереи'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: visionGray,
-                        side: BorderSide(color: visionGray.withOpacity(0.3)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      onPressed: () async {
-                        final pickedFile = await _picker.pickImage(
-                            source: ImageSource.gallery);
-                        if (pickedFile != null) {
-                          setState(() {
-                            dialogImage = File(pickedFile.path);
-                          });
-                        }
-                      },
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               actions: [
@@ -391,7 +396,7 @@ class _OrderDetailPageState extends State<OrderDetailPage>
       final request = http.MultipartRequest(
         'PUT',
         Uri.parse(
-            'https://rhik.pythonanywhere.com/sales/api/orders/${widget.orderId}/products/$productId/'),
+            'http://26.6.96.21:8000/sales/api/orders/${widget.orderId}/products/$productId/'),
       )
         ..headers['Authorization'] = 'Bearer $token'
         ..fields['name'] = name
@@ -443,7 +448,7 @@ class _OrderDetailPageState extends State<OrderDetailPage>
     try {
       final response = await http.delete(
         Uri.parse(
-            'https://rhik.pythonanywhere.com/sales/api/orders/${widget.orderId}/products/$productId/'),
+            'http://26.6.96.21:8000/sales/api/orders/${widget.orderId}/products/$productId/'),
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
           'Authorization': 'Bearer $token',
@@ -471,6 +476,7 @@ class _OrderDetailPageState extends State<OrderDetailPage>
   }
 
   void _showSnackBar(String message, bool isError) {
+    ScaffoldMessenger.of(context).removeCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -496,209 +502,204 @@ class _OrderDetailPageState extends State<OrderDetailPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: hikRed,
-        title: Text(
-          'Детали заказа',
-          style: GoogleFonts.montserrat(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
+    return AdaptiveScaffold(
+      appBar: AdaptiveAppBar(
+        title: 'Детали заказа',
+        useNativeToolbar: true,
+        leading: SizedBox(
+          width: 38,
+          height: 38,
+          child: AdaptiveButton.sfSymbol(
+            onPressed: () => Navigator.of(context).pop(),
+            sfSymbol: const SFSymbol('chevron.left', size: 20),
+            useSmoothRectangleBorder: false,
           ),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          AdaptiveAppBarAction(
+            iosSymbol: 'plus',
+            icon: Icons.add,
+            onPressed: () async {
+              await _showAddProductDialog(context);
+            },
+          ),
+        ],
       ),
       body: Container(
         color: Colors.grey[100],
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: _isLoading
-              ? _buildLoadingShimmer()
-              : FutureBuilder<OrderDetails>(
-                  future: _orderDetails,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return _buildLoadingShimmer();
-                    } else if (snapshot.hasError) {
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(20.0),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.error_outline,
-                                color: hikRed,
-                                size: 60,
-                              ),
-                              SizedBox(height: 16),
-                              Text(
-                                'Ошибка: ${snapshot.error}',
-                                style: GoogleFonts.montserrat(
-                                  color: darkGray,
-                                  fontSize: 16,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              SizedBox(height: 24),
-                              ElevatedButton.icon(
-                                onPressed: () {
-                                  setState(() {
-                                    _orderDetails =
-                                        fetchOrderDetails(widget.orderId);
-                                  });
-                                },
-                                icon: Icon(Icons.refresh),
-                                label: Text('Повторить'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: hikRed,
-                                  foregroundColor: Colors.white,
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 12),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30),
+        child: Material(
+          type: MaterialType.transparency,
+          child: SafeArea(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: _isLoading
+                  ? _buildLoadingShimmer()
+                  : FutureBuilder<OrderDetails>(
+                      future: _orderDetails,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return _buildLoadingShimmer();
+                        } else if (snapshot.hasError) {
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.error_outline,
+                                    color: hikRed,
+                                    size: 60,
                                   ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    } else if (snapshot.hasData) {
-                      final orderDetails = snapshot.data!;
-                      final products = orderDetails.products;
-
-                      return Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Container(
-                              padding: EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 8,
-                                    offset: Offset(0, 3),
+                                  SizedBox(height: 16),
+                                  Text(
+                                    'Ошибка: ${snapshot.error}',
+                                    style: GoogleFonts.montserrat(
+                                      color: darkGray,
+                                      fontSize: 16,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  SizedBox(height: 24),
+                                  ElevatedButton.icon(
+                                    onPressed: () {
+                                      setState(() {
+                                        _orderDetails =
+                                            fetchOrderDetails(widget.orderId);
+                                      });
+                                    },
+                                    icon: Icon(Icons.refresh),
+                                    label: Text('Повторить'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: hikRed,
+                                      foregroundColor: Colors.white,
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(30),
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: hikRed.withOpacity(0.1),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      Icons.person_outline,
-                                      color: hikRed,
-                                      size: 24,
-                                    ),
-                                  ),
-                                  SizedBox(width: 16),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Клиент:',
-                                        style: GoogleFonts.montserrat(
-                                          color: visionGray,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      Text(
-                                        orderDetails.client,
-                                        style: GoogleFonts.montserrat(
-                                          color: darkGray,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 18,
-                                        ),
+                            ),
+                          );
+                        } else if (snapshot.hasData) {
+                          final orderDetails = snapshot.data!;
+                          final products = orderDetails.products;
+
+                          return Column(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Container(
+                                  padding: EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.05),
+                                        blurRadius: 8,
+                                        offset: Offset(0, 3),
                                       ),
                                     ],
                                   ),
-                                ],
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: hikRed.withOpacity(0.1),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          Icons.person_outline,
+                                          color: hikRed,
+                                          size: 24,
+                                        ),
+                                      ),
+                                      SizedBox(width: 16),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Клиент:',
+                                            style: GoogleFonts.montserrat(
+                                              color: visionGray,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                          Text(
+                                            orderDetails.client,
+                                            style: GoogleFonts.montserrat(
+                                              color: darkGray,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 18,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16.0, vertical: 8.0),
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    'Товары заказа (${products.length})',
+                                    style: GoogleFonts.montserrat(
+                                      color: visionGray,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: products.isEmpty
+                                    ? _buildEmptyProductsList()
+                                    : ListView.builder(
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 16),
+                                        itemCount: products.length,
+                                        itemBuilder: (context, index) {
+                                          final product = products[index];
+                                          return Animate(
+                                            effects: [
+                                              FadeEffect(
+                                                  duration: 300.ms,
+                                                  delay: (50 * index).ms)
+                                            ],
+                                            child: _buildProductCard(
+                                                product, context),
+                                          );
+                                        },
+                                      ),
+                              ),
+                              _buildOrderSummary(orderDetails),
+                            ],
+                          );
+                        } else {
+                          return Center(
+                            child: Text(
+                              'Нет доступных данных',
+                              style: GoogleFonts.montserrat(
+                                color: darkGray,
                               ),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16.0, vertical: 8.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Товары заказа (${products.length})',
-                                  style: GoogleFonts.montserrat(
-                                    color: visionGray,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                  ),
-                                ),
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.add_circle_outline,
-                                    color: hikRed,
-                                  ),
-                                  onPressed: () async {
-                                    await _showAddProductDialog(context);
-                                  },
-                                  tooltip: 'Добавить товар',
-                                ),
-                              ],
-                            ),
-                          ),
-                          Expanded(
-                            child: products.isEmpty
-                                ? _buildEmptyProductsList()
-                                : ListView.builder(
-                                    padding:
-                                        EdgeInsets.symmetric(horizontal: 16),
-                                    itemCount: products.length,
-                                    itemBuilder: (context, index) {
-                                      final product = products[index];
-                                      return Animate(
-                                        effects: [
-                                          FadeEffect(
-                                              duration: 300.ms,
-                                              delay: (50 * index).ms)
-                                        ],
-                                        child:
-                                            _buildProductCard(product, context),
-                                      );
-                                    },
-                                  ),
-                          ),
-                          _buildOrderSummary(orderDetails),
-                        ],
-                      );
-                    } else {
-                      return Center(
-                        child: Text(
-                          'Нет доступных данных',
-                          style: GoogleFonts.montserrat(
-                            color: darkGray,
-                          ),
-                        ),
-                      );
-                    }
-                  },
-                ),
+                          );
+                        }
+                      },
+                    ),
+            ),
+          ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          await _showAddProductDialog(context);
-        },
-        backgroundColor: hikRed,
-        child: const Icon(Icons.add, color: Colors.white),
-        tooltip: 'Добавить товар',
       ),
     );
   }
@@ -935,21 +936,19 @@ class _OrderDetailPageState extends State<OrderDetailPage>
             SizedBox(height: 12),
             Row(
               children: [
-                Expanded(
-                  child: _buildSummaryItem(
-                    icon: Icons.payments_outlined,
-                    title: 'Аванс',
-                    value: orderDetails.advance!.toStringAsFixed(2),
-                    color: Colors.green,
-                  ),
+                _buildSummaryItem(
+                  icon: Icons.payments_outlined,
+                  title: 'Аванс',
+                  value: orderDetails.advance!.toStringAsFixed(2),
+                  color: Colors.green,
                 ),
-                Expanded(
-                  child: _buildSummaryItem(
-                    icon: Icons.price_check,
-                    title: 'Остаток',
-                    value: (orderDetails.totalGeneralAmount - orderDetails.advance!).toStringAsFixed(2),
-                    color: visionGray,
-                  ),
+                _buildSummaryItem(
+                  icon: Icons.price_check,
+                  title: 'Остаток',
+                  value:
+                      (orderDetails.totalGeneralAmount - orderDetails.advance!)
+                          .toStringAsFixed(2),
+                  color: visionGray,
                 ),
               ],
             ),
@@ -1034,22 +1033,6 @@ class _OrderDetailPageState extends State<OrderDetailPage>
               fontSize: 14,
             ),
             textAlign: TextAlign.center,
-          ),
-          SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () async {
-              await _showAddProductDialog(context);
-            },
-            icon: Icon(Icons.add_shopping_cart),
-            label: Text('Добавить первый товар'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: hikRed,
-              foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-            ),
           ),
         ],
       ),
@@ -1139,238 +1122,242 @@ class _OrderDetailPageState extends State<OrderDetailPage>
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: _nameController,
-                      style: TextStyle(color: darkGray),
-                      decoration: InputDecoration(
-                        labelText: 'Название товара',
-                        labelStyle: TextStyle(color: visionGray),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide:
-                              BorderSide(color: visionGray.withOpacity(0.3)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: hikRed),
-                        ),
-                        prefixIcon: Icon(Icons.shopping_bag_outlined,
-                            color: visionGray),
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    TextField(
-                      controller: _quantityController,
-                      style: TextStyle(color: darkGray),
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: 'Количество',
-                        labelStyle: TextStyle(color: visionGray),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide:
-                              BorderSide(color: visionGray.withOpacity(0.3)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: hikRed),
-                        ),
-                        prefixIcon:
-                            Icon(Icons.format_list_numbered, color: visionGray),
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    TextField(
-                      controller: _priceController,
-                      style: TextStyle(color: darkGray),
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: 'Цена за единицу',
-                        labelStyle: TextStyle(color: visionGray),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide:
-                              BorderSide(color: visionGray.withOpacity(0.3)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: hikRed),
-                        ),
-                        prefixIcon: Icon(Icons.attach_money, color: visionGray),
-                      ),
-                    ),
-                    SizedBox(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Фото товара',
-                          style: GoogleFonts.montserrat(
-                            color: visionGray,
-                            fontWeight: FontWeight.bold,
+              content: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.9,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: _nameController,
+                        style: TextStyle(color: darkGray),
+                        decoration: InputDecoration(
+                          labelText: 'Название товара',
+                          labelStyle: TextStyle(color: visionGray),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide:
+                                BorderSide(color: visionGray.withOpacity(0.3)),
                           ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: hikRed),
+                          ),
+                          prefixIcon: Icon(Icons.shopping_bag_outlined,
+                              color: visionGray),
                         ),
-                        if (hasExistingImage)
+                      ),
+                      SizedBox(height: 16),
+                      TextField(
+                        controller: _quantityController,
+                        style: TextStyle(color: darkGray),
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Количество',
+                          labelStyle: TextStyle(color: visionGray),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide:
+                                BorderSide(color: visionGray.withOpacity(0.3)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: hikRed),
+                          ),
+                          prefixIcon: Icon(Icons.format_list_numbered,
+                              color: visionGray),
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                      TextField(
+                        controller: _priceController,
+                        style: TextStyle(color: darkGray),
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Цена за единицу',
+                          labelStyle: TextStyle(color: visionGray),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide:
+                                BorderSide(color: visionGray.withOpacity(0.3)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: hikRed),
+                          ),
+                          prefixIcon:
+                              Icon(Icons.attach_money, color: visionGray),
+                        ),
+                      ),
+                      SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
                           Text(
-                            'Текущее фото',
+                            'Фото товара',
                             style: GoogleFonts.montserrat(
-                              color: hikRed,
+                              color: visionGray,
                               fontWeight: FontWeight.bold,
-                              fontSize: 12,
                             ),
                           ),
-                      ],
-                    ),
-                    SizedBox(height: 12),
-                    if (hasExistingImage && dialogImage == null)
-                      Container(
-                        height: 120,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: visionGray.withOpacity(0.3),
-                            width: 1,
-                          ),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: CachedNetworkImage(
-                            imageUrl: product.photoUrl!,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Center(
-                              child: CircularProgressIndicator(
+                          if (hasExistingImage)
+                            Text(
+                              'Текущее фото',
+                              style: GoogleFonts.montserrat(
                                 color: hikRed,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
                               ),
                             ),
-                            errorWidget: (context, url, error) => Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.error_outline,
-                                    color: hikRed,
-                                  ),
-                                  SizedBox(height: 4),
-                                  Text(
-                                    'Ошибка загрузки',
-                                    style: GoogleFonts.montserrat(
-                                      color: visionGray,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
+                        ],
                       ),
-                    if (dialogImage != null || !hasExistingImage)
-                      GestureDetector(
-                        onTap: () async {
-                          final pickedFile = await _picker.pickImage(
-                              source: ImageSource.camera);
-                          if (pickedFile != null) {
-                            setState(() {
-                              dialogImage = File(pickedFile.path);
-                            });
-                          }
-                        },
-                        child: Container(
+                      SizedBox(height: 12),
+                      if (hasExistingImage && dialogImage == null)
+                        Container(
                           height: 120,
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            color: lightGray,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: visionGray.withOpacity(0.3),
                               width: 1,
                             ),
                           ),
-                          child: dialogImage == null
-                              ? Column(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: CachedNetworkImage(
+                              imageUrl: product.photoUrl!,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Center(
+                                child: CircularProgressIndicator(
+                                  color: hikRed,
+                                ),
+                              ),
+                              errorWidget: (context, url, error) => Center(
+                                child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(
-                                      Icons.camera_alt_outlined,
-                                      color: visionGray,
-                                      size: 40,
+                                      Icons.error_outline,
+                                      color: hikRed,
                                     ),
-                                    SizedBox(height: 8),
+                                    SizedBox(height: 4),
                                     Text(
-                                      hasExistingImage
-                                          ? 'Заменить фото'
-                                          : 'Сделать фото',
+                                      'Ошибка загрузки',
                                       style: GoogleFonts.montserrat(
                                         color: visionGray,
+                                        fontSize: 12,
                                       ),
                                     ),
                                   ],
-                                )
-                              : ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Image.file(
-                                    dialogImage!,
-                                    fit: BoxFit.cover,
-                                  ),
                                 ),
-                        ),
-                      ),
-                    SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            icon: Icon(Icons.photo_library_outlined),
-                            label: Text('Из галереи'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: visionGray,
-                              side: BorderSide(
-                                  color: visionGray.withOpacity(0.3)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
                               ),
                             ),
-                            onPressed: () async {
-                              final pickedFile = await _picker.pickImage(
-                                  source: ImageSource.gallery);
-                              if (pickedFile != null) {
-                                setState(() {
-                                  dialogImage = File(pickedFile.path);
-                                });
-                              }
-                            },
                           ),
                         ),
-                        if (hasExistingImage) SizedBox(width: 8),
-                        if (hasExistingImage && dialogImage != null)
+                      if (dialogImage != null || !hasExistingImage)
+                        GestureDetector(
+                          onTap: () async {
+                            final pickedFile = await _picker.pickImage(
+                                source: ImageSource.camera);
+                            if (pickedFile != null) {
+                              setState(() {
+                                dialogImage = File(pickedFile.path);
+                              });
+                            }
+                          },
+                          child: Container(
+                            height: 120,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: lightGray,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: visionGray.withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: dialogImage == null
+                                ? Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.camera_alt_outlined,
+                                        color: visionGray,
+                                        size: 40,
+                                      ),
+                                      SizedBox(height: 8),
+                                      Text(
+                                        hasExistingImage
+                                            ? 'Заменить фото'
+                                            : 'Сделать фото',
+                                        style: GoogleFonts.montserrat(
+                                          color: visionGray,
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Image.file(
+                                      dialogImage!,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
                           Expanded(
                             child: OutlinedButton.icon(
-                              icon: Icon(Icons.refresh),
-                              label: Text('Вернуть текущее'),
+                              icon: Icon(Icons.photo_library_outlined),
+                              label: Text('Из галереи'),
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: hikRed,
-                                side:
-                                    BorderSide(color: hikRed.withOpacity(0.3)),
+                                foregroundColor: visionGray,
+                                side: BorderSide(
+                                    color: visionGray.withOpacity(0.3)),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                               ),
-                              onPressed: () {
-                                setState(() {
-                                  dialogImage = null;
-                                });
+                              onPressed: () async {
+                                final pickedFile = await _picker.pickImage(
+                                    source: ImageSource.gallery);
+                                if (pickedFile != null) {
+                                  setState(() {
+                                    dialogImage = File(pickedFile.path);
+                                  });
+                                }
                               },
                             ),
                           ),
-                      ],
-                    ),
-                  ],
+                          if (hasExistingImage) SizedBox(width: 8),
+                          if (hasExistingImage && dialogImage != null)
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                icon: Icon(Icons.refresh),
+                                label: Text('Вернуть текущее'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: hikRed,
+                                  side: BorderSide(
+                                      color: hikRed.withOpacity(0.3)),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    dialogImage = null;
+                                  });
+                                },
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
               actions: [
@@ -1425,62 +1412,22 @@ class _OrderDetailPageState extends State<OrderDetailPage>
   }
 
   Future<void> _confirmDeleteProduct(int productId) async {
-    return showDialog<void>(
+    AdaptiveAlertDialog.show(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Text(
-            'Подтверждение удаления',
-            style: GoogleFonts.montserrat(
-              color: hikRed,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: Text(
-            'Вы уверены, что хотите удалить этот товар?',
-            style: GoogleFonts.montserrat(
-              color: darkGray,
-            ),
-          ),
-          actions: [
-            TextButton(
-              child: Text(
-                'Отмена',
-                style: GoogleFonts.montserrat(
-                  color: visionGray,
-                ),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            ElevatedButton(
-              child: Text(
-                'Удалить',
-                style: GoogleFonts.montserrat(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: hikRed,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-                _deleteProductFromOrder(productId);
-              },
-            ),
-          ],
-        );
-      },
+      title: 'Подтверждение удаления',
+      message: 'Вы уверены, что хотите удалить этот товар?',
+      actions: [
+        AlertAction(
+          title: 'Отмена',
+          style: AlertActionStyle.cancel,
+          onPressed: () {},
+        ),
+        AlertAction(
+          title: 'Удалить',
+          style: AlertActionStyle.destructive,
+          onPressed: () => _deleteProductFromOrder(productId),
+        ),
+      ],
     );
   }
 }
@@ -1493,7 +1440,7 @@ class OrderProduct {
   final double totalPrice;
   final String? photoUrl;
 
-  static const String baseUrl = 'https://rhik.pythonanywhere.com';
+  static const String baseUrl = 'http://26.6.96.21:8000';
 
   OrderProduct({
     required this.id,
