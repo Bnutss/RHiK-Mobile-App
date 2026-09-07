@@ -230,6 +230,8 @@ class _OrdersPageState extends State<OrdersPage>
         },
       );
 
+      if (!mounted) return;
+
       if (response.statusCode == 200) {
         _showSnackBar('Заказ успешно экспортирован в формате $format',
             isError: false);
@@ -238,6 +240,7 @@ class _OrdersPageState extends State<OrdersPage>
             isError: true);
       }
     } catch (e) {
+      if (!mounted) return;
       _showSnackBar('Произошла ошибка: $e', isError: true);
     }
   }

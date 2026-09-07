@@ -52,6 +52,8 @@ class _MenuPageState extends State<MenuPage> {
         useNativeBottomBar: true,
         selectedIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
+        selectedItemColor: Colors.black,
+        unselectedItemColor: const Color(0xFF707070),
         items: [
           AdaptiveNavigationDestination(
             icon: _navIcon(sfSymbol: 'house', material: Icons.home_outlined),
