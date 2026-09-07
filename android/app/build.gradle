@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.rhick"
+    namespace = "uz.rhik.xvan"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -19,7 +19,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.rhick"
+        applicationId = "uz.rhik.xvan"
         minSdk = 21
         targetSdk = 33
         versionCode = 1

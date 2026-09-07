@@ -1,4 +1,4 @@
-package com.example.rhick
+package uz.rhik.xvan
 
 import io.flutter.embedding.android.FlutterActivity
 
