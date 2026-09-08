@@ -1,11 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
+import 'api_client.dart';
 import 'order_detail_page.dart';
 import 'add_order_page.dart';
 import 'edit_order_page.dart';
@@ -59,22 +58,11 @@ class _OrdersPageState extends State<OrdersPage>
       _isRefreshing = true;
     });
 
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('access_token');
-
-    if (token == null) {
-      setState(() {
-        _isRefreshing = false;
-      });
-      throw Exception('Токен авторизации не найден');
-    }
-
     try {
-      final response = await http.get(
-        Uri.parse('http://26.6.96.21:8000/sales/api/orders/'),
+      final response = await apiGet(
+        Uri.parse('https://rhik.uz/sales/api/orders/'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=utf-8',
-          'Authorization': 'Bearer $token',
         },
       );
 
@@ -118,23 +106,22 @@ class _OrdersPageState extends State<OrdersPage>
   }
 
   Future<void> _deleteOrder(int orderId) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('access_token');
-    if (token == null) return;
+    try {
+      final response = await apiDelete(
+        Uri.parse('https://rhik.uz/sales/api/orders/$orderId/'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=utf-8',
+        },
+      );
 
-    final response = await http.delete(
-      Uri.parse('http://26.6.96.21:8000/sales/api/orders/$orderId/'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=utf-8',
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 204) {
-      _refreshOrders();
-      _showSnackBar('Заказ успешно удален', isError: false);
-    } else {
-      _showSnackBar('Ошибка при удалении заказа', isError: true);
+      if (response.statusCode == 204) {
+        _refreshOrders();
+        _showSnackBar('Заказ успешно удален', isError: false);
+      } else {
+        _showSnackBar('Ошибка при удалении заказа', isError: true);
+      }
+    } catch (e) {
+      _showSnackBar('Ошибка: $e', isError: true);
     }
   }
 
@@ -162,16 +149,11 @@ class _OrdersPageState extends State<OrdersPage>
   }
 
   Future<void> _confirmOrder(int orderId) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('access_token');
-    if (token == null) return;
-
     try {
-      final response = await http.patch(
-        Uri.parse('http://26.6.96.21:8000/sales/api/orders/$orderId/confirm/'),
+      final response = await apiPatch(
+        Uri.parse('https://rhik.uz/sales/api/orders/$orderId/confirm/'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=utf-8',
-          'Authorization': 'Bearer $token',
         },
       );
 
@@ -187,16 +169,11 @@ class _OrdersPageState extends State<OrdersPage>
   }
 
   Future<void> _rejectOrder(int orderId) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('access_token');
-    if (token == null) return;
-
     try {
-      final response = await http.patch(
-        Uri.parse('http://26.6.96.21:8000/sales/api/orders/$orderId/reject/'),
+      final response = await apiPatch(
+        Uri.parse('https://rhik.uz/sales/api/orders/$orderId/reject/'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=utf-8',
-          'Authorization': 'Bearer $token',
         },
       );
 
@@ -212,22 +189,14 @@ class _OrdersPageState extends State<OrdersPage>
   }
 
   Future<void> _exportOrder(int orderId, String format) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('access_token');
-
-    if (token == null) {
-      throw Exception('Токен авторизации не найден');
-    }
-
     final url =
-        'http://26.6.96.21:8000/sales/api/orders/$orderId/export_to_telegram/?file_type=$format';
+        'https://rhik.uz/sales/api/orders/$orderId/export_to_telegram/?file_type=$format';
 
     try {
-      final response = await http.post(
+      final response = await apiPost(
         Uri.parse(url),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=utf-8',
-          'Authorization': 'Bearer $token',
         },
       );
 

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
+import 'api_client.dart';
 import 'widgets/app_toast.dart';
 
 class EditOrderPage extends StatefulWidget {
@@ -68,22 +67,10 @@ class _EditOrderPageState extends State<EditOrderPage>
     });
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('access_token');
-
-      if (token == null) {
-        _showSnackBar('Токен авторизации не найден', true);
-        setState(() {
-          _isLoading = false;
-        });
-        return;
-      }
-
-      final response = await http.get(
-        Uri.parse('http://26.6.96.21:8000/sales/api/orders/${widget.orderId}/'),
+      final response = await apiGet(
+        Uri.parse('https://rhik.uz/sales/api/orders/${widget.orderId}/'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
         },
       );
 
@@ -123,23 +110,10 @@ class _EditOrderPageState extends State<EditOrderPage>
       });
 
       try {
-        final prefs = await SharedPreferences.getInstance();
-        final token = prefs.getString('access_token');
-
-        if (token == null) {
-          _showSnackBar('Токен авторизации не найден', true);
-          setState(() {
-            _isSaving = false;
-          });
-          return;
-        }
-
-        final response = await http.put(
-          Uri.parse(
-              'http://26.6.96.21:8000/sales/api/orders/${widget.orderId}/'),
+        final response = await apiPut(
+          Uri.parse('https://rhik.uz/sales/api/orders/${widget.orderId}/'),
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer $token',
           },
           body: json.encode({
             'client': _clientController.text,

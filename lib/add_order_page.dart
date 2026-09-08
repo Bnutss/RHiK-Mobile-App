@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
+import 'api_client.dart';
 import 'order_detail_page.dart';
 import 'widgets/app_toast.dart';
 
@@ -67,22 +66,10 @@ class _AddOrderPageState extends State<AddOrderPage>
       });
 
       try {
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        final token = prefs.getString('access_token');
-
-        if (token == null) {
-          _showSnackBar('Токен не найден', true);
-          setState(() {
-            _isCreating = false;
-          });
-          return;
-        }
-
-        final response = await http.post(
-          Uri.parse('http://26.6.96.21:8000/sales/api/orders/'),
+        final response = await apiPost(
+          Uri.parse('https://rhik.uz/sales/api/orders/'),
           headers: {
             'Content-Type': 'application/json; charset=utf-8',
-            'Authorization': 'Bearer $token',
           },
           body: json.encode({
             'client': _clientController.text,

@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
+import 'api_client.dart';
 import 'info_page.dart';
 import 'results_day_page.dart';
 import 'orders_page.dart';
@@ -153,27 +154,42 @@ class _HomeTabState extends State<_HomeTab>
     setState(() => _isLoadingStats = true);
 
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('access_token');
+    var token = prefs.getString('access_token');
     if (token == null) {
       if (mounted) setState(() => _isLoadingStats = false);
       return;
     }
 
-    final headers = {
-      'Authorization': 'Bearer $token',
-      'Content-Type': 'application/json',
-    };
+    Map<String, String> headers(String t) => {
+          'Authorization': 'Bearer $t',
+          'Content-Type': 'application/json',
+        };
+
+    final urls = [
+      Uri.parse('https://rhik.uz/sales/api/orders/'),
+      Uri.parse('https://rhik.uz/sales/api/confirmed-orders/'),
+      Uri.parse('https://rhik.uz/sales/api/passwords/'),
+    ];
 
     try {
-      final responses = await Future.wait([
-        http.get(Uri.parse('http://26.6.96.21:8000/sales/api/orders/'),
-            headers: headers),
-        http.get(
-            Uri.parse('http://26.6.96.21:8000/sales/api/confirmed-orders/'),
-            headers: headers),
-        http.get(Uri.parse('http://26.6.96.21:8000/sales/api/passwords/'),
-            headers: headers),
-      ]);
+      var responses = await Future.wait(
+        urls.map((url) => http.get(url, headers: headers(token!))),
+      );
+
+      // Все три запроса используют один и тот же access_token, так что
+      // достаточно одного обновления токена на всю пачку, а не по одному
+      // на запрос: сервер выпускает новый refresh_token на каждый вызов
+      // /api/token/refresh/ и блокирует старый, поэтому параллельные
+      // попытки обновления токена приводили бы к гонке.
+      if (responses.any((r) => r.statusCode == 401)) {
+        final refreshed = await refreshAccessToken();
+        if (refreshed) {
+          token = prefs.getString('access_token');
+          responses = await Future.wait(
+            urls.map((url) => http.get(url, headers: headers(token!))),
+          );
+        }
+      }
 
       if (responses[0].statusCode == 200) {
         _ordersCount =

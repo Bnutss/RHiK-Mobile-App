@@ -26,6 +26,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _useFaceId = false;
 
   static const String _appVersion = '1.0.0 (1)';
+  static const String _developerName = 'Bakhrom Narzullaev';
   static const String _telegramHandle = '@bnutss';
   static const String _telegramUrl = 'https://t.me/bnutss';
 
@@ -178,8 +179,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         icon: Icons.telegram,
                         iconColor: const Color(0xFF29A9EA),
                         title: 'Разработчик',
-                        subtitle:
-                            '${_displayName.isNotEmpty ? _displayName : 'Bakhrom Narzullaev'} · $_telegramHandle',
+                        subtitle: '$_developerName · $_telegramHandle',
                         onTap: _openTelegram,
                       ),
                     ],

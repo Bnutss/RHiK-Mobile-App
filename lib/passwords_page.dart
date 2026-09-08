@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
+import 'api_client.dart';
 import 'widgets/app_toast.dart';
 
 class PasswordsPage extends StatefulWidget {
@@ -57,32 +56,14 @@ class _PasswordsPageState extends State<PasswordsPage>
     super.dispose();
   }
 
-  Future<String?> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('access_token');
-  }
-
   Future<void> fetchPasswords() async {
     setState(() {
       isLoading = true;
     });
 
     try {
-      final token = await _getToken();
-      if (token == null) {
-        _showSnackBar('Токен не найден. Пожалуйста, войдите заново.',
-            isError: true);
-        setState(() {
-          isLoading = false;
-        });
-        return;
-      }
-
-      final response = await http.get(
-        Uri.parse('http://26.6.96.21:8000/sales/api/passwords/'),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
+      final response = await apiGet(
+        Uri.parse('https://rhik.uz/sales/api/passwords/'),
       );
 
       if (response.statusCode == 200) {
@@ -127,19 +108,11 @@ class _PasswordsPageState extends State<PasswordsPage>
       return;
     }
 
-    final token = await _getToken();
-    if (token == null) {
-      _showSnackBar('Токен не найден. Пожалуйста, войдите заново.',
-          isError: true);
-      return;
-    }
-
     try {
       final response = id == null
-          ? await http.post(
-              Uri.parse('http://26.6.96.21:8000/sales/api/passwords/'),
+          ? await apiPost(
+              Uri.parse('https://rhik.uz/sales/api/passwords/'),
               headers: {
-                'Authorization': 'Bearer $token',
                 'Content-Type': 'application/json',
               },
               body: jsonEncode({
@@ -148,10 +121,9 @@ class _PasswordsPageState extends State<PasswordsPage>
                 'camera_password': cameraPassword,
               }),
             )
-          : await http.put(
-              Uri.parse('http://26.6.96.21:8000/sales/api/passwords/$id/'),
+          : await apiPut(
+              Uri.parse('https://rhik.uz/sales/api/passwords/$id/'),
               headers: {
-                'Authorization': 'Bearer $token',
                 'Content-Type': 'application/json',
               },
               body: jsonEncode({
@@ -407,19 +379,9 @@ class _PasswordsPageState extends State<PasswordsPage>
 
   // Метод для непосредственного выполнения удаления (без дополнительного диалога)
   Future<void> _performDeletePassword(int id) async {
-    final token = await _getToken();
-    if (token == null) {
-      _showSnackBar('Токен не найден. Пожалуйста, войдите заново.',
-          isError: true);
-      return;
-    }
-
     try {
-      final response = await http.delete(
-        Uri.parse('http://26.6.96.21:8000/sales/api/passwords/$id/'),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
+      final response = await apiDelete(
+        Uri.parse('https://rhik.uz/sales/api/passwords/$id/'),
       );
 
       if (response.statusCode == 204) {

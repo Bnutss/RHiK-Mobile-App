@@ -1,14 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
+import 'api_client.dart';
 import 'widgets/app_toast.dart';
 
 class OrderDetailPage extends StatefulWidget {
@@ -62,22 +61,11 @@ class _OrderDetailPageState extends State<OrderDetailPage>
       _isLoading = true;
     });
 
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('access_token');
-
-    if (token == null) {
-      setState(() {
-        _isLoading = false;
-      });
-      throw Exception('Токен авторизации не найден');
-    }
-
     try {
-      final response = await http.get(
-        Uri.parse('http://26.6.96.21:8000/sales/api/orders/$orderId/'),
+      final response = await apiGet(
+        Uri.parse('https://rhik.uz/sales/api/orders/$orderId/'),
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
-          'Authorization': 'Bearer $token',
         },
       );
 
@@ -107,33 +95,18 @@ class _OrderDetailPageState extends State<OrderDetailPage>
       _isLoading = true;
     });
 
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('access_token');
-
-    if (token == null) {
-      setState(() {
-        _isLoading = false;
-      });
-      throw Exception('Токен авторизации не найден');
-    }
-
     try {
-      final request = http.MultipartRequest(
+      final response = await authorizedMultipartRequest(
         'POST',
         Uri.parse(
-            'http://26.6.96.21:8000/sales/api/orders/${widget.orderId}/products/'),
-      )
-        ..headers['Authorization'] = 'Bearer $token'
-        ..fields['name'] = name
-        ..fields['quantity'] = quantity.toString()
-        ..fields['price'] = price.toString();
-
-      if (image != null) {
-        request.files
-            .add(await http.MultipartFile.fromPath('photo', image.path));
-      }
-
-      final response = await request.send();
+            'https://rhik.uz/sales/api/orders/${widget.orderId}/products/'),
+        fields: {
+          'name': name,
+          'quantity': quantity.toString(),
+          'price': price.toString(),
+        },
+        imageFile: image,
+      );
 
       if (response.statusCode == 201) {
         setState(() {
@@ -383,33 +356,18 @@ class _OrderDetailPageState extends State<OrderDetailPage>
       _isLoading = true;
     });
 
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('access_token');
-
-    if (token == null) {
-      setState(() {
-        _isLoading = false;
-      });
-      throw Exception('Токен авторизации не найден');
-    }
-
     try {
-      final request = http.MultipartRequest(
+      final response = await authorizedMultipartRequest(
         'PUT',
         Uri.parse(
-            'http://26.6.96.21:8000/sales/api/orders/${widget.orderId}/products/$productId/'),
-      )
-        ..headers['Authorization'] = 'Bearer $token'
-        ..fields['name'] = name
-        ..fields['quantity'] = quantity.toString()
-        ..fields['price'] = price.toString();
-
-      if (image != null) {
-        request.files
-            .add(await http.MultipartFile.fromPath('photo', image.path));
-      }
-
-      final response = await request.send();
+            'https://rhik.uz/sales/api/orders/${widget.orderId}/products/$productId/'),
+        fields: {
+          'name': name,
+          'quantity': quantity.toString(),
+          'price': price.toString(),
+        },
+        imageFile: image,
+      );
 
       if (response.statusCode == 200) {
         setState(() {
@@ -436,23 +394,12 @@ class _OrderDetailPageState extends State<OrderDetailPage>
       _isLoading = true;
     });
 
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('access_token');
-
-    if (token == null) {
-      setState(() {
-        _isLoading = false;
-      });
-      throw Exception('Токен авторизации не найден');
-    }
-
     try {
-      final response = await http.delete(
+      final response = await apiDelete(
         Uri.parse(
-            'http://26.6.96.21:8000/sales/api/orders/${widget.orderId}/products/$productId/'),
+            'https://rhik.uz/sales/api/orders/${widget.orderId}/products/$productId/'),
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
-          'Authorization': 'Bearer $token',
         },
       );
 
@@ -1420,7 +1367,7 @@ class OrderProduct {
   final double totalPrice;
   final String? photoUrl;
 
-  static const String baseUrl = 'http://26.6.96.21:8000';
+  static const String baseUrl = 'https://rhik.uz';
 
   OrderProduct({
     required this.id,

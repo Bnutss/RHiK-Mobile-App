@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'api_client.dart';
 import 'menu_page.dart';
 import 'widgets/app_toast.dart';
 
@@ -134,7 +135,7 @@ class _LoginPageState extends State<LoginPage>
 
   Future<void> _fetchUserData(String token) async {
     final userResponse = await http.get(
-      Uri.parse('http://26.6.96.21:8000/api/user/'),
+      Uri.parse('https://rhik.uz/api/user/'),
       headers: <String, String>{
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -162,33 +163,9 @@ class _LoginPageState extends State<LoginPage>
   }
 
   Future<void> _refreshToken() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final refreshToken = prefs.getString('refresh_token');
-
-    if (refreshToken != null) {
-      try {
-        final response = await http.post(
-          Uri.parse('http://26.6.96.21:8000/api/token/refresh/'),
-          headers: <String, String>{
-            'Content-Type': 'application/json',
-          },
-          body: jsonEncode({
-            'refresh': refreshToken,
-          }),
-        );
-
-        if (response.statusCode == 200) {
-          final refreshData = json.decode(utf8.decode(response.bodyBytes));
-          final newAccessToken = refreshData['access'];
-          await prefs.setString('access_token', newAccessToken);
-        } else {
-          _showError('Не удалось обновить токен');
-        }
-      } catch (e) {
-        _showError('Ошибка сети: $e');
-      }
-    } else {
-      _showError('Токен обновления не найден');
+    final refreshed = await refreshAccessToken();
+    if (!refreshed) {
+      _showError('Не удалось обновить токен');
     }
   }
 
@@ -207,7 +184,7 @@ class _LoginPageState extends State<LoginPage>
 
     try {
       final response = await http.post(
-        Uri.parse('http://26.6.96.21:8000/api/login/'),
+        Uri.parse('https://rhik.uz/api/login/'),
         headers: <String, String>{
           'Content-Type': 'application/json',
         },

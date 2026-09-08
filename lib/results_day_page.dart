@@ -1,13 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
+import 'api_client.dart';
 import 'widgets/app_toast.dart';
 
 class ResultsDayPage extends StatefulWidget {
@@ -242,59 +241,48 @@ class _ResultsDayPageState extends State<ResultsDayPage>
       _isLoading = true;
     });
 
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('access_token');
+    final String? startDate = _startDate != null
+        ? DateFormat('yyyy-MM-dd').format(_startDate!)
+        : null;
+    final String? endDate =
+        _endDate != null ? DateFormat('yyyy-MM-dd').format(_endDate!) : null;
 
-    if (token != null) {
-      final String? startDate = _startDate != null
-          ? DateFormat('yyyy-MM-dd').format(_startDate!)
-          : null;
-      final String? endDate =
-          _endDate != null ? DateFormat('yyyy-MM-dd').format(_endDate!) : null;
+    final queryParameters = {
+      if (startDate != null) 'start_date': startDate,
+      if (endDate != null) 'end_date': endDate,
+    };
+    final uri = Uri.https(
+      'rhik.uz',
+      '/sales/api/confirmed-orders/',
+      queryParameters,
+    );
 
-      final queryParameters = {
-        if (startDate != null) 'start_date': startDate,
-        if (endDate != null) 'end_date': endDate,
-      };
-      final uri = Uri.http(
-        '26.6.96.21:8000',
-        '/sales/api/confirmed-orders/',
-        queryParameters,
+    try {
+      final response = await apiGet(
+        uri,
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+        },
       );
 
-      try {
-        final response = await http.get(
-          uri,
-          headers: <String, String>{
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $token',
-          },
-        );
-
-        if (response.statusCode == 200) {
-          final data = json.decode(utf8.decode(response.bodyBytes));
-          setState(() {
-            orders = data['orders'];
-            totalSum = data['total_sum'];
-            _isLoading = false;
-          });
-        } else {
-          setState(() {
-            _isLoading = false;
-          });
-          _showError('Ошибка получения заказов: ${response.statusCode}');
-        }
-      } catch (e) {
+      if (response.statusCode == 200) {
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        setState(() {
+          orders = data['orders'];
+          totalSum = data['total_sum'];
+          _isLoading = false;
+        });
+      } else {
         setState(() {
           _isLoading = false;
         });
-        _showError('Ошибка соединения с сервером');
+        _showError('Ошибка получения заказов: ${response.statusCode}');
       }
-    } else {
+    } catch (e) {
       setState(() {
         _isLoading = false;
       });
-      _showError('Токен авторизации не найден');
+      _showError('Ошибка соединения с сервером');
     }
   }
 
