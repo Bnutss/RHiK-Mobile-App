@@ -548,26 +548,55 @@ class _OrderDetailPageState extends State<OrderDetailPage>
                                         ),
                                       ),
                                       SizedBox(width: 16),
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Клиент:',
-                                            style: GoogleFonts.montserrat(
-                                              color: visionGray,
-                                              fontSize: 14,
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Клиент:',
+                                              style: GoogleFonts.montserrat(
+                                                color: visionGray,
+                                                fontSize: 14,
+                                              ),
                                             ),
-                                          ),
-                                          Text(
-                                            orderDetails.client,
-                                            style: GoogleFonts.montserrat(
-                                              color: darkGray,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 18,
+                                            Text(
+                                              orderDetails.client,
+                                              style: GoogleFonts.montserrat(
+                                                color: darkGray,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 18,
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                            if (orderDetails.clientPhone !=
+                                                    null &&
+                                                orderDetails
+                                                    .clientPhone!.isNotEmpty)
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                    top: 4),
+                                                child: Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Icon(Icons.phone_outlined,
+                                                        size: 14,
+                                                        color: visionGray),
+                                                    SizedBox(width: 4),
+                                                    Text(
+                                                      orderDetails
+                                                          .clientPhone!,
+                                                      style: GoogleFonts
+                                                          .montserrat(
+                                                        color: visionGray,
+                                                        fontSize: 14,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                          ],
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -1392,6 +1421,7 @@ class OrderProduct {
 
 class OrderDetails {
   final String client;
+  final String? clientPhone;
   final double vat;
   final double additionalExpenses;
   final double? advance;
@@ -1403,6 +1433,7 @@ class OrderDetails {
 
   OrderDetails({
     required this.client,
+    this.clientPhone,
     required this.vat,
     required this.additionalExpenses,
     this.advance,
@@ -1421,6 +1452,7 @@ class OrderDetails {
 
     return OrderDetails(
       client: json['client'],
+      clientPhone: json['client_phone'] as String?,
       vat: double.tryParse(json['vat']?.toString() ?? '0.0') ?? 0.0,
       additionalExpenses:
           double.tryParse(json['additional_expenses']?.toString() ?? '0.0') ??

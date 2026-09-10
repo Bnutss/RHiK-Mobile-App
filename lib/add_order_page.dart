@@ -20,10 +20,12 @@ class _AddOrderPageState extends State<AddOrderPage>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _clientController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _vatController = TextEditingController();
   final _additionalExpensesController = TextEditingController();
   final _advanceController = TextEditingController();
   bool _isCreating = false;
+  bool _addPhone = false;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
@@ -52,6 +54,7 @@ class _AddOrderPageState extends State<AddOrderPage>
   @override
   void dispose() {
     _clientController.dispose();
+    _phoneController.dispose();
     _vatController.dispose();
     _additionalExpensesController.dispose();
     _advanceController.dispose();
@@ -73,6 +76,10 @@ class _AddOrderPageState extends State<AddOrderPage>
           },
           body: json.encode({
             'client': _clientController.text,
+            'client_phone':
+                _addPhone && _phoneController.text.isNotEmpty
+                    ? _phoneController.text
+                    : null,
             'vat': _vatController.text.isEmpty
                 ? null
                 : double.tryParse(_vatController.text),
@@ -267,6 +274,36 @@ class _AddOrderPageState extends State<AddOrderPage>
                                       },
                                       delay: 100,
                                     ),
+                                    SizedBox(height: 12),
+                                    _buildPhoneToggle(delay: 150),
+                                    AnimatedSize(
+                                      duration: const Duration(
+                                          milliseconds: 250),
+                                      curve: Curves.easeInOut,
+                                      child: _addPhone
+                                          ? Padding(
+                                              padding: const EdgeInsets.only(
+                                                  top: 20),
+                                              child: _buildFormField(
+                                                controller: _phoneController,
+                                                label: 'Номер телефона',
+                                                hint:
+                                                    'Введите номер телефона клиента',
+                                                icon: Icons.phone_outlined,
+                                                keyboardType:
+                                                    TextInputType.phone,
+                                                validator: (value) {
+                                                  if (_addPhone &&
+                                                      (value == null ||
+                                                          value.isEmpty)) {
+                                                    return 'Введите номер телефона';
+                                                  }
+                                                  return null;
+                                                },
+                                              ),
+                                            )
+                                          : const SizedBox(width: double.infinity),
+                                    ),
                                     SizedBox(height: 20),
                                     _buildFormField(
                                       controller: _vatController,
@@ -416,6 +453,55 @@ class _AddOrderPageState extends State<AddOrderPage>
                   ),
                 ],
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPhoneToggle({int delay = 0}) {
+    return Animate(
+      effects: [
+        FadeEffect(duration: 400.ms, delay: delay.ms),
+        SlideEffect(
+            begin: Offset(0, 0.1),
+            end: Offset.zero,
+            duration: 400.ms,
+            delay: delay.ms)
+      ],
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: lightGray),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.phone_outlined, color: visionGray),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Добавить номер клиента',
+                style: GoogleFonts.montserrat(
+                  color: darkGray,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            AdaptiveSwitch(
+              value: _addPhone,
+              activeColor: hikRed,
+              onChanged: (value) {
+                setState(() {
+                  _addPhone = value;
+                  if (!value) {
+                    _phoneController.clear();
+                  }
+                });
+              },
             ),
           ],
         ),

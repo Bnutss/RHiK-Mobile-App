@@ -21,6 +21,20 @@ class _ResultsDayPageState extends State<ResultsDayPage>
   DateTime? _startDate;
   DateTime? _endDate;
   String _selectedPreset = 'all';
+  static const List<String> _presetKeys = [
+    'all',
+    'today',
+    'week',
+    'month',
+    'custom',
+  ];
+  static const List<String> _presetLabels = [
+    'Всё время',
+    'Сегодня',
+    'Неделя',
+    'Месяц',
+    'Свой период',
+  ];
   bool _isLoading = true;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -269,7 +283,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
         final data = json.decode(utf8.decode(response.bodyBytes));
         setState(() {
           orders = data['orders'];
-          totalSum = data['total_sum'];
+          totalSum = (data['total_sum'] as num).toDouble();
           _isLoading = false;
         });
       } else {
@@ -398,22 +412,18 @@ class _ResultsDayPageState extends State<ResultsDayPage>
                     // Быстрые пресеты периода
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            _buildPresetChip('all', 'Всё время'),
-                            SizedBox(width: 8),
-                            _buildPresetChip('today', 'Сегодня'),
-                            SizedBox(width: 8),
-                            _buildPresetChip('week', 'Неделя'),
-                            SizedBox(width: 8),
-                            _buildPresetChip('month', 'Месяц'),
-                            SizedBox(width: 8),
-                            _buildPresetChip('custom', 'Свой период',
-                                onTapOverride: () => _selectDateRange(context)),
-                          ],
-                        ),
+                      child: AdaptiveSegmentedControl(
+                        labels: _presetLabels,
+                        selectedIndex: _presetKeys.indexOf(_selectedPreset),
+                        color: hikRed,
+                        onValueChanged: (index) {
+                          final preset = _presetKeys[index];
+                          if (preset == 'custom') {
+                            _selectDateRange(context);
+                          } else {
+                            _applyPreset(preset);
+                          }
+                        },
                       ),
                     ),
                     // Период дат
@@ -488,40 +498,6 @@ class _ResultsDayPageState extends State<ResultsDayPage>
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPresetChip(String preset, String label,
-      {VoidCallback? onTapOverride}) {
-    final bool isSelected = _selectedPreset == preset;
-
-    return GestureDetector(
-      onTap: onTapOverride ?? () => _applyPreset(preset),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? hikRed : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? hikRed : visionGray.withOpacity(0.2),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 6,
-              offset: Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Text(
-          label,
-          style: GoogleFonts.montserrat(
-            color: isSelected ? Colors.white : visionGray,
-            fontSize: 13,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
       ),
@@ -689,221 +665,290 @@ class _ResultsDayPageState extends State<ResultsDayPage>
       return _buildEmptyState();
     }
 
-    Map<String, double> dailyTotals = {};
+    final Map<DateTime, double> dailyTotalsMap = {};
     for (var order in orders) {
-      DateTime orderDate = _parseServerDate(order['created_at']);
-      String dayKey = DateFormat('dd.MM').format(orderDate);
-      double price = double.parse(order['total_price_with_vat'].toString());
-
-      if (dailyTotals.containsKey(dayKey)) {
-        dailyTotals[dayKey] = dailyTotals[dayKey]! + price;
-      } else {
-        dailyTotals[dayKey] = price;
-      }
+      final orderDate = _parseServerDate(order['created_at']);
+      final dayKey = DateTime(orderDate.year, orderDate.month, orderDate.day);
+      final price = double.parse(order['total_price_with_vat'].toString());
+      dailyTotalsMap.update(dayKey, (existing) => existing + price,
+          ifAbsent: () => price);
     }
 
-    List<String> days = dailyTotals.keys.toList();
-    List<double> values = dailyTotals.values.toList();
+    final sortedDays = dailyTotalsMap.keys.toList()..sort();
+    final days =
+        sortedDays.map((d) => DateFormat('dd.MM').format(d)).toList();
+    final values = sortedDays.map((d) => dailyTotalsMap[d]!).toList();
+    final averagePerDay = values.isNotEmpty
+        ? values.reduce((a, b) => a + b) / values.length
+        : 0.0;
 
     return SingleChildScrollView(
       padding: EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: Offset(0, 5),
+          _buildChartCard(days, values, averagePerDay),
+          SizedBox(height: 20),
+          _buildHeroStatCard(),
+          SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _buildMiniStatCard(
+                  icon: Icons.shopping_bag_outlined,
+                  label: 'Заказов',
+                  value: orders.length.toString(),
+                  color: Color(0xFF2E7D32),
                 ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Продажи по дням',
-                  style: GoogleFonts.montserrat(
-                    color: darkGray,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: _buildMiniStatCard(
+                  icon: Icons.trending_up_rounded,
+                  label: 'Средний чек',
+                  value: _formatMoney(
+                      orders.isNotEmpty ? totalSum / orders.length : 0),
+                  color: Color(0xFF1565C0),
                 ),
-                SizedBox(height: 20),
-                Container(
-                  height: 200,
-                  child: BarChart(
-                    BarChartData(
-                      alignment: BarChartAlignment.spaceAround,
-                      maxY: values.isNotEmpty
-                          ? values.reduce((a, b) => a > b ? a : b) * 1.2
-                          : 100,
-                      barTouchData: BarTouchData(
-                        enabled: true,
-                        touchTooltipData: BarTouchTooltipData(
-                          tooltipBgColor: Colors.white,
-                          getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                            return BarTooltipItem(
-                              '${days[groupIndex]}\n',
-                              GoogleFonts.montserrat(
-                                color: darkGray,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              children: <TextSpan>[
-                                TextSpan(
-                                  text:
-                                      '${values[groupIndex].toStringAsFixed(2)}',
-                                  style: GoogleFonts.montserrat(
-                                    color: hikRed,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                      ),
-                      titlesData: FlTitlesData(
-                        show: true,
-                        bottomTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            getTitlesWidget: (value, meta) {
-                              if (value >= 0 && value < days.length) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(top: 8.0),
-                                  child: Text(
-                                    days[value.toInt()],
-                                    style: GoogleFonts.montserrat(
-                                      color: visionGray,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                );
-                              }
-                              return Text('');
-                            },
-                            reservedSize: 30,
-                          ),
-                        ),
-                        leftTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            getTitlesWidget: (value, meta) {
-                              return Text(
-                                value.toInt().toString(),
-                                style: GoogleFonts.montserrat(
-                                  color: visionGray,
-                                  fontSize: 10,
-                                ),
-                              );
-                            },
-                            reservedSize: 35,
-                          ),
-                        ),
-                        topTitles: AxisTitles(
-                            sideTitles: SideTitles(showTitles: false)),
-                        rightTitles: AxisTitles(
-                            sideTitles: SideTitles(showTitles: false)),
-                      ),
-                      gridData: FlGridData(
-                        show: true,
-                        horizontalInterval: values.isNotEmpty
-                            ? values.reduce((a, b) => a > b ? a : b) / 5
-                            : 20,
-                        getDrawingHorizontalLine: (value) {
-                          return FlLine(
-                            color: lightGray,
-                            strokeWidth: 1,
-                          );
-                        },
-                      ),
-                      borderData: FlBorderData(show: false),
-                      barGroups: List.generate(
-                        days.length,
-                        (index) => BarChartGroupData(
-                          x: index,
-                          barRods: [
-                            BarChartRodData(
-                              toY: values[index],
-                              color: hikRed,
-                              width: 15,
-                              borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(4),
-                                topRight: Radius.circular(4),
-                              ),
-                              backDrawRodData: BackgroundBarChartRodData(
-                                show: true,
-                                toY: values.isNotEmpty
-                                    ? values.reduce((a, b) => a > b ? a : b) *
-                                        1.2
-                                    : 100,
-                                color: lightGray,
-                              ),
-                            ),
-                          ],
-                        ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Formats a monetary value with space-separated thousands, e.g. 30846.94
+  /// becomes "30 846.94".
+  String _formatMoney(double value) {
+    final isNegative = value < 0;
+    final parts = value.abs().toStringAsFixed(2).split('.');
+    final wholeDigits = parts[0];
+    final buffer = StringBuffer();
+    for (int i = 0; i < wholeDigits.length; i++) {
+      final remaining = wholeDigits.length - i;
+      if (i != 0 && remaining % 3 == 0) buffer.write(' ');
+      buffer.write(wholeDigits[i]);
+    }
+    return '${isNegative ? '-' : ''}${buffer.toString()}.${parts[1]}';
+  }
+
+  /// Compact axis labels: 1200 -> "1.2K", 950 -> "950".
+  String _formatCompact(double value) {
+    if (value.abs() >= 1000) {
+      return '${(value / 1000).toStringAsFixed(value % 1000 == 0 ? 0 : 1)}K';
+    }
+    return value.toInt().toString();
+  }
+
+  String _daysWord(int count) {
+    final mod10 = count % 10;
+    final mod100 = count % 100;
+    if (mod10 == 1 && mod100 != 11) return 'день';
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) {
+      return 'дня';
+    }
+    return 'дней';
+  }
+
+  Widget _buildChartCard(
+      List<String> days, List<double> values, double averagePerDay) {
+    final maxValue =
+        values.isNotEmpty ? values.reduce((a, b) => a > b ? a : b) : 0.0;
+    final chartMaxY = maxValue > 0 ? maxValue * 1.3 : 100.0;
+    final labelStep = days.length > 6 ? (days.length / 5).ceil() : 1;
+    final periodTotal = values.fold<double>(0, (sum, v) => sum + v);
+
+    return Container(
+      padding: EdgeInsets.fromLTRB(20, 20, 16, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 20,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Продажи по дням',
+                      style: GoogleFonts.montserrat(
+                        color: darkGray,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
                       ),
                     ),
-                  ),
+                    SizedBox(height: 3),
+                    Text(
+                      '${days.length} ${_daysWord(days.length)} · в среднем ${_formatMoney(averagePerDay)}/день',
+                      style: GoogleFonts.montserrat(
+                        color: visionGray,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          SizedBox(height: 20),
-          Container(
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: Offset(0, 5),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: hikRed.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Основная статистика',
+                child: Text(
+                  _formatMoney(periodTotal),
                   style: GoogleFonts.montserrat(
-                    color: darkGray,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    color: hikRed,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                SizedBox(height: 16),
-                _buildStatCard(
-                  icon: Icons.shopping_bag_outlined,
-                  title: 'Всего заказов',
-                  value: orders.length.toString(),
-                  color: Color(0xFF4CAF50),
+              ),
+            ],
+          ),
+          SizedBox(height: 26),
+          SizedBox(
+            height: 220,
+            child: BarChart(
+              BarChartData(
+                alignment: BarChartAlignment.spaceAround,
+                maxY: chartMaxY,
+                barTouchData: BarTouchData(
+                  enabled: true,
+                  touchTooltipData: BarTouchTooltipData(
+                    tooltipBgColor: darkGray,
+                    tooltipRoundedRadius: 10,
+                    tooltipPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                      return BarTooltipItem(
+                        '${days[groupIndex]}\n',
+                        GoogleFonts.montserrat(
+                          color: Colors.white70,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        children: <TextSpan>[
+                          TextSpan(
+                            text: _formatMoney(values[groupIndex]),
+                            style: GoogleFonts.montserrat(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                 ),
-                SizedBox(height: 12),
-                _buildStatCard(
-                  icon: Icons.attach_money,
-                  title: 'Общая сумма',
-                  value: totalSum.toStringAsFixed(2),
-                  color: hikRed,
+                titlesData: FlTitlesData(
+                  show: true,
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        final index = value.toInt();
+                        if (index < 0 || index >= days.length) {
+                          return const SizedBox.shrink();
+                        }
+                        final isLast = index == days.length - 1;
+                        if (labelStep > 1 &&
+                            index % labelStep != 0 &&
+                            !isLast) {
+                          return const SizedBox.shrink();
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 10.0),
+                          child: Text(
+                            days[index],
+                            style: GoogleFonts.montserrat(
+                              color: visionGray,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        );
+                      },
+                      reservedSize: 30,
+                    ),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        if (value == 0) return const SizedBox.shrink();
+                        return Text(
+                          _formatCompact(value),
+                          style: GoogleFonts.montserrat(
+                            color: visionGray,
+                            fontSize: 10,
+                          ),
+                        );
+                      },
+                      reservedSize: 38,
+                    ),
+                  ),
+                  topTitles: AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
                 ),
-                SizedBox(height: 12),
-                _buildStatCard(
-                  icon: Icons.trending_up,
-                  title: 'Средний чек',
-                  value: orders.isNotEmpty
-                      ? (totalSum / orders.length).toStringAsFixed(2)
-                      : '0.00',
-                  color: Color(0xFF2196F3),
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  horizontalInterval: chartMaxY / 4,
+                  getDrawingHorizontalLine: (value) {
+                    return FlLine(
+                      color: lightGray,
+                      strokeWidth: 1,
+                      dashArray: [4, 4],
+                    );
+                  },
                 ),
-              ],
+                borderData: FlBorderData(show: false),
+                barGroups: List.generate(days.length, (index) {
+                  final isPeak = values[index] == maxValue && maxValue > 0;
+                  return BarChartGroupData(
+                    x: index,
+                    barRods: [
+                      BarChartRodData(
+                        toY: values[index],
+                        width: days.length > 10 ? 10 : 18,
+                        gradient: LinearGradient(
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                          colors: isPeak
+                              ? [hikRed, hikRed.withOpacity(0.75)]
+                              : [
+                                  hikRed.withOpacity(0.55),
+                                  hikRed.withOpacity(0.32),
+                                ],
+                        ),
+                        borderRadius: BorderRadius.circular(6),
+                        backDrawRodData: BackgroundBarChartRodData(
+                          show: true,
+                          toY: chartMaxY,
+                          color: lightGray.withOpacity(0.5),
+                        ),
+                      ),
+                    ],
+                  );
+                }),
+              ),
             ),
           ),
         ],
@@ -911,37 +956,36 @@ class _ResultsDayPageState extends State<ResultsDayPage>
     );
   }
 
-  Widget _buildStatCard({
-    required IconData icon,
-    required String title,
-    required String value,
-    required Color color,
-  }) {
+  Widget _buildHeroStatCard() {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [hikRed, hikRed.withOpacity(0.85)],
+        ),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: Offset(0, 5),
+            color: hikRed.withOpacity(0.3),
+            blurRadius: 20,
+            offset: Offset(0, 10),
           ),
         ],
       ),
       child: Row(
         children: [
           Container(
-            padding: EdgeInsets.all(12),
+            padding: EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: Colors.white.withOpacity(0.15),
               shape: BoxShape.circle,
             ),
             child: Icon(
-              icon,
-              color: color,
-              size: 24,
+              Icons.payments_rounded,
+              color: Colors.white,
+              size: 26,
             ),
           ),
           SizedBox(width: 16),
@@ -949,22 +993,77 @@ class _ResultsDayPageState extends State<ResultsDayPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                title,
+                'Общая сумма',
                 style: GoogleFonts.montserrat(
-                  color: visionGray,
-                  fontSize: 14,
+                  color: Colors.white.withOpacity(0.85),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
               SizedBox(height: 4),
               Text(
-                value,
+                _formatMoney(totalSum),
                 style: GoogleFonts.montserrat(
-                  color: darkGray,
+                  color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  fontSize: 20,
+                  fontSize: 26,
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMiniStatCard({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 14,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          SizedBox(height: 14),
+          Text(
+            value,
+            style: GoogleFonts.montserrat(
+              color: darkGray,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          SizedBox(height: 2),
+          Text(
+            label,
+            style: GoogleFonts.montserrat(
+              color: visionGray,
+              fontSize: 12,
+            ),
           ),
         ],
       ),
@@ -1047,7 +1146,7 @@ class _ResultsDayPageState extends State<ResultsDayPage>
               borderRadius: BorderRadius.circular(16),
             ),
             child: Text(
-              '${totalSum.toStringAsFixed(2)}',
+              _formatMoney(totalSum),
               style: GoogleFonts.montserrat(
                 color: hikRed,
                 fontSize: 18,

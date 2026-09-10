@@ -216,10 +216,6 @@ class _HomeTabState extends State<_HomeTab>
       context: context,
       title: 'Выход',
       message: 'Вы уверены, что хотите выйти?',
-      icon: _navIcon(
-          sfSymbol: 'rectangle.portrait.and.arrow.right',
-          material: Icons.logout),
-      iconColor: hikRed,
       actions: [
         AlertAction(
           title: 'Отмена',
@@ -468,6 +464,21 @@ class _HomeTabState extends State<_HomeTab>
     );
   }
 
+  /// Formats a monetary value with space-separated thousands, e.g. 30846.94
+  /// becomes "30 846.94".
+  String _formatMoney(double value) {
+    final isNegative = value < 0;
+    final parts = value.abs().toStringAsFixed(2).split('.');
+    final wholeDigits = parts[0];
+    final buffer = StringBuffer();
+    for (int i = 0; i < wholeDigits.length; i++) {
+      final remaining = wholeDigits.length - i;
+      if (i != 0 && remaining % 3 == 0) buffer.write(' ');
+      buffer.write(wholeDigits[i]);
+    }
+    return '${isNegative ? '-' : ''}${buffer.toString()}.${parts[1]}';
+  }
+
   Widget _buildOverviewGrid() {
     return GridView.count(
       shrinkWrap: true,
@@ -491,7 +502,7 @@ class _HomeTabState extends State<_HomeTab>
         ),
         _buildStatCard(
           title: 'Сумма за день',
-          value: _confirmedTotal.toStringAsFixed(2),
+          value: _formatMoney(_confirmedTotal),
           material: Icons.bar_chart_rounded,
           accent: hikRed,
         ),

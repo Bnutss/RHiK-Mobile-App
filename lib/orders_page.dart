@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'api_client.dart';
 import 'order_detail_page.dart';
 import 'add_order_page.dart';
@@ -212,6 +213,15 @@ class _OrdersPageState extends State<OrdersPage>
     } catch (e) {
       if (!mounted) return;
       _showSnackBar('Произошла ошибка: $e', isError: true);
+    }
+  }
+
+  Future<void> _callClient(String phone) async {
+    final uri = Uri(scheme: 'tel', path: phone);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else if (mounted) {
+      _showSnackBar('Не удалось открыть звонилку', isError: true);
     }
   }
 
@@ -457,85 +467,26 @@ class _OrdersPageState extends State<OrdersPage>
     );
   }
 
-  Widget _buildFilterChips() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          _buildFilterChip('Все'),
-          SizedBox(width: 8),
-          _buildFilterChip('Подтвержден'),
-          SizedBox(width: 8),
-          _buildFilterChip('Отклонен'),
-          SizedBox(width: 8),
-          _buildFilterChip('Не обработан'),
-        ],
-      ),
-    );
-  }
+  static const List<String> _statusOptions = [
+    'Все',
+    'Подтвержден',
+    'Отклонен',
+    'Не обработан',
+  ];
 
-  Widget _buildFilterChip(String status) {
-    bool isSelected = _selectedStatus == status;
-
-    Color chipColor;
-    IconData chipIcon;
-
-    switch (status) {
-      case 'Подтвержден':
-        chipColor = Colors.green;
-        chipIcon = Icons.check_circle;
-        break;
-      case 'Отклонен':
-        chipColor = hikRed;
-        chipIcon = Icons.cancel;
-        break;
-      case 'Не обработан':
-        chipColor = visionGray;
-        chipIcon = Icons.pending;
-        break;
-      default:
-        chipColor = hikRed;
-        chipIcon = Icons.all_inclusive;
-    }
-
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _selectedStatus = status;
-          _orders = fetchOrders();
-        });
-      },
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? chipColor.withOpacity(0.1) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? chipColor : visionGray.withOpacity(0.2),
-            width: 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              chipIcon,
-              color: isSelected ? chipColor : visionGray,
-              size: 16,
-            ),
-            SizedBox(width: 6),
-            Text(
-              status,
-              style: GoogleFonts.montserrat(
-                color: isSelected ? chipColor : visionGray,
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-          ],
-        ),
+  Widget _buildStatusSegmentedControl() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: AdaptiveSegmentedControl(
+        labels: _statusOptions,
+        selectedIndex: _statusOptions.indexOf(_selectedStatus),
+        color: hikRed,
+        onValueChanged: (index) {
+          setState(() {
+            _selectedStatus = _statusOptions[index];
+            _orders = fetchOrders();
+          });
+        },
       ),
     );
   }
@@ -617,7 +568,7 @@ class _OrdersPageState extends State<OrdersPage>
               opacity: _fadeAnimation,
               child: Column(
                 children: [
-                  _buildFilterChips(),
+                  _buildStatusSegmentedControl(),
                   Expanded(
                     child: _isRefreshing
                         ? _buildLoadingShimmer()
@@ -752,12 +703,51 @@ class _OrdersPageState extends State<OrdersPage>
                                                                   TextOverflow
                                                                       .ellipsis,
                                                             ),
-                                                            SizedBox(height: 4),
+                                                            if (order.clientPhone !=
+                                                                    null &&
+                                                                order
+                                                                    .clientPhone!
+                                                                    .isNotEmpty)
+                                                              Padding(
+                                                                padding: const EdgeInsets
+                                                                    .only(
+                                                                    top: 2,
+                                                                    bottom: 4),
+                                                                child: Text(
+                                                                  order
+                                                                      .clientPhone!,
+                                                                  style: GoogleFonts
+                                                                      .montserrat(
+                                                                    color:
+                                                                        visionGray,
+                                                                    fontSize:
+                                                                        12,
+                                                                  ),
+                                                                ),
+                                                              )
+                                                            else
+                                                              SizedBox(
+                                                                  height: 4),
                                                             _buildStatusChip(
                                                                 status),
                                                           ],
                                                         ),
                                                       ),
+                                                      if (order.clientPhone !=
+                                                              null &&
+                                                          order.clientPhone!
+                                                              .isNotEmpty)
+                                                        IconButton(
+                                                          icon: Icon(
+                                                            Icons.call,
+                                                            color:
+                                                                Colors.green,
+                                                          ),
+                                                          tooltip: 'Позвонить',
+                                                          onPressed: () =>
+                                                              _callClient(order
+                                                                  .clientPhone!),
+                                                        ),
                                                       IconButton(
                                                         icon: Icon(
                                                           Icons.more_vert,
@@ -988,6 +978,7 @@ class _OrdersPageState extends State<OrdersPage>
 class Order {
   final int id;
   final String client;
+  final String? clientPhone;
   final double vat;
   final double? additionalExpenses;
   final double? advance;
@@ -1000,6 +991,7 @@ class Order {
   Order({
     required this.id,
     required this.client,
+    this.clientPhone,
     required this.vat,
     this.additionalExpenses,
     this.advance,
@@ -1014,6 +1006,7 @@ class Order {
     return Order(
       id: json['id'],
       client: json['client'],
+      clientPhone: json['client_phone'] as String?,
       vat: json['vat'] != null
           ? double.tryParse(json['vat'].toString()) ?? 0.0
           : 0.0,
